@@ -15,6 +15,7 @@ struct TS{
 int main(){
 	int ID=0,NE=201,ND=301,NX=401;
 	struct TS *ini = NULL, *fin = NULL, *aux = NULL;
+	struct TS *iniPila = NULL, *finPILA = NULL, *auxPILA = NULL;
 	
 	
 	
@@ -115,6 +116,11 @@ int main(){
 					if (letra == '*' || letra == '/' || letra == '%' || letra == '^'){
 						caso = 18;
 					}
+					
+					if (letra == ';' || letra == ','){
+						caso = 20;
+					}
+					
 					
 					break;
 				
@@ -304,9 +310,20 @@ int main(){
 					break;
 
 				case 19:
-						almacenarTS("","",Palabra,"",0);
+						if (!strcmp(Palabra,"int")){
+							almacenarTS(Palabra,"PR","","",517);
+						}else{
+							almacenarTS(Palabra,"PR","","",518);
+						}
 						break;
 					break;
+					
+				case 20:
+					if (!strcmp(Palabra,";")){
+						almacenarTS(Palabra,"SEP","","",515);
+					}else{
+						almacenarTS(Palabra,"SEP","","",516);
+					}
 					
 				default:
 					printf("\nCadena invalida.");
