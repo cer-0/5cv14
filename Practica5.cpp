@@ -12,7 +12,10 @@ struct TSimbolos
 {
 	//datos
 	char lexema[1000];
-	char tipotoken[1000];
+	char tipotoken[3];
+	char tipdat[3];
+	char regla[10];
+	int ind;
 	char derivacion[1000];
 	//liga
 	TSimbolos *liga;
@@ -31,12 +34,13 @@ void pop();
 void top();
 void ImprimeDerivacion();
 
-char *palres[] = {"for", "int", "while", "if", "float", 
-				"printf", "do", "double", "char", "bool"};
+char *palres[] = {"int", "float"};
 
+int indID=0,indNE=201,indND=301,indNX=401;
 
-int main(void)
+int main(void)	
 {
+	
 	const char* archivo = "archivofuente.txt"; 
 	
 	//En lugar de ingresar una cadena, se leen del archivo
@@ -156,6 +160,12 @@ int AnalizadorLexico( const char* lex )
 				}
 			}
 			break;
+			
+		case ';':
+		case ',':
+			tiptok = 9;
+			break;
+		
 		default:
 			break;
 	}
@@ -171,7 +181,7 @@ int IdentificaTipo( const char* cad )
 	//2: Palabra Reservada
 	int c = 0;
 	if( tipo == 1 )
-		while( c < (10) )
+		while( c < (2) )
 		{
 			if( !(strcmp( cad, palres[c] ) ) )
 			{
@@ -199,6 +209,8 @@ int IdentificaTipo( const char* cad )
 			return 7;
 		case 8:
 			return 8;
+		case 9:
+			return 9;
 		default:
 			return -1;
 	}
@@ -229,28 +241,95 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 	switch( tiptok )
 	{
 		case 1:
-			strcpy(NuevoTabla->tipotoken, "Identificador");
+			strcpy(NuevoTabla->tipotoken, "ID");
+			NuevoTabla->ind = indID;
+			indID++;
 			break;
 		case 2:
-			strcpy(NuevoTabla->tipotoken, "Palabra Reservada");
+			strcpy(NuevoTabla->tipotoken, "PR");
+			if (!strcmp (lex,"int")){
+				NuevoTabla->ind = 517;
+			}else{
+				NuevoTabla->ind = 518;
+			}
 			break;
 		case 3:
-			strcpy(NuevoTabla->tipotoken, "Operador Relacional");
+			strcpy(NuevoTabla->tipotoken, "OR");
+			
+			if (!strcmp(lex,">")){
+				NuevoTabla->ind = 503;
+			}else if (!strcmp(lex,"<")){
+				NuevoTabla->ind = 504;
+			}else if (!strcmp(lex,">=")){
+				NuevoTabla->ind = 505;
+			}else if (!strcmp(lex,"<=")){
+				NuevoTabla->ind = 506;
+			}else if (!strcmp(lex,"!=")){
+				NuevoTabla->ind = 507;
+			}else if (!strcmp(lex,"==")){
+				NuevoTabla->ind = 508;
+			}
+
 			break;
 		case 4:
-			strcpy(NuevoTabla->tipotoken, "Operador Logico");
+			strcpy(NuevoTabla->tipotoken, "OL");
+			if (!strcmp(lex,"&&")){
+				NuevoTabla->ind = 501;
+			}else if (!strcmp(lex,"||")){
+				NuevoTabla->ind = 502;
+			}
 			break;
 		case 5:
-			strcpy(NuevoTabla->tipotoken, "Operador Aritmetico");
+			strcpy(NuevoTabla->tipotoken, "OA");
+			strcpy(NuevoTabla->regla, "Aritm.");
+			switch (lex[0]){
+				case '*':
+					NuevoTabla->ind = 510;
+					break;
+				case '/':
+					NuevoTabla->ind = 511;
+					break;
+				case '+':
+					NuevoTabla->ind = 512;
+					break;
+				case '-':
+					NuevoTabla->ind = 513;
+					break;
+				case '=':
+					NuevoTabla->ind = 514;
+					break;
+			}
 			break;
 		case 6:
-			strcpy(NuevoTabla->tipotoken, "Entero");
+			strcpy(NuevoTabla->tipotoken, "NE");
+			strcpy(NuevoTabla->regla, "Aritm.");
+			NuevoTabla->ind = indNE;
+			indNE++;
 			break;
 		case 7:
-			strcpy(NuevoTabla->tipotoken, "Decimal");
+			strcpy(NuevoTabla->tipotoken, "ND");
+			strcpy(NuevoTabla->regla, "Aritm.");
+			NuevoTabla->ind = indND;
+			indND++;
 			break;
 		case 8:
-			strcpy(NuevoTabla->tipotoken, "Exponencial");
+			strcpy(NuevoTabla->tipotoken, "NX");
+			strcpy(NuevoTabla->regla, "Aritm.");
+			NuevoTabla->ind = indNX;
+			indNX++;
+			break;
+		
+		case 9:
+			strcpy(NuevoTabla->tipotoken, "SEP");
+			switch (lex[0]){
+				case ',':
+					NuevoTabla->ind = 515;
+					break;
+				case ';':
+					NuevoTabla->ind = 516;
+					break;
+			}
+			
 			break;
 	}
 	
@@ -292,7 +371,7 @@ void AnalizadorSintactico(void)
 	while( Aux != NULL )
 	{
 		//Si el token actual es un numero
-		if( !(strcmp(Aux->tipotoken, "Entero")) || !(strcmp(Aux->tipotoken, "Decimal")) || !(strcmp(Aux->tipotoken, "Exponencial")) )
+		if( !(strcmp(Aux->tipotoken, "NE")) || !(strcmp(Aux->tipotoken, "ND")) || !(strcmp(Aux->tipotoken, "NX")) )
 		{
 			pop();
 			push("num");
