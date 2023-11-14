@@ -1,7 +1,11 @@
-/*Programador: David Emmanuel Nicolas Castañeda
+/*Programadores:
+	David
+	Enrique
+	Moises
+	Labardini
   Compiladores 5CV14
-  Profr: Jesus Mora Jain
-  Practica 3: Reconocedor de tokens con tabla de simbolos
+  Profesor: Jesus Mora Jain
+  Practica 5: Analizador sintactico
 */
 #include <stdio.h>
 #include <string.h>
@@ -45,7 +49,6 @@ int main(void)
 	
 	//En lugar de ingresar una cadena, se leen del archivo
 	LeeArchivo(archivo);
-	//GuardaTablaSimbolos("TablaS.txt");
 	AnalizadorSintactico();
 	system("PAUSE");
 	return 0;
@@ -345,25 +348,6 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 		QTabla = NuevoTabla;
 	}		
 }
-/*
-void GuardaTablaSimbolos(const char* arc)
-{
-	FILE *Archivo2 = fopen(arc, "w");
-	char cadena[1000];
-	if( Archivo2 != NULL ) //Si el archivo se abre correctamente
-	{
-		Aux = PTabla;
-		while(Aux != NULL)
-		{
-			fprintf(Archivo2, "%s %s\n", Aux->lexema, Aux->tipotoken);
-			Aux = Aux->liga;
-		}
-	}
-	else
-		printf("Ocurrio un error al intentar abrir el archivo\n\n");
-	fclose(Archivo2);
-}
-*/
 
 void AnalizadorSintactico(void)
 {
