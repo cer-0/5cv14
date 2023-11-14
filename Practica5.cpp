@@ -42,17 +42,6 @@ char *palres[] = {"int", "float"};
 
 int indID=0,indNE=201,indND=301,indNX=401;
 
-void ImprimeTabla()
-{
-	Aux = PTabla;
-	while(Aux != NULL)
-	{
-		printf("%s ", Aux->lexema);
-		Aux = Aux->liga;
-	}
-	printf("\n");
-}
-
 int main(void)	
 {
 	
@@ -60,7 +49,6 @@ int main(void)
 	
 	//En lugar de ingresar una cadena, se leen del archivo
 	LeeArchivo(archivo);
-	ImprimeTabla();
 	AnalizadorSintactico();
 	system("PAUSE");
 	return 0;
@@ -376,91 +364,111 @@ void AnalizadorSintactico(void)
 	Aux = PTabla;
 	push("G");
 	ImprimeDerivacion();
-	//Si hay simbolos por analizar
-	if( Aux != NULL )
+	//Mientras haya simbolos por analizar
+	while( Aux != NULL )
 	{
-		//Si al frente de la pila hay un simbolo no terminal G
+		//Si hay un simbolo no terminal al frente de la pila, y es G
 		if( !strcmp(QPila->derivacion, "G") )
 		{
 			//Se elimina de la pila
 			pop();
-			//Si el token actual es una palabra reservada
+			//Si el primer token es una palabra reservada, entonces es una declaracion/asignacion
 			if( !(strcmp(Aux->tipotoken, "PR")))
 			{
-				//Si hay un simbolo no terminal al frente de la pila, lo elimina
-				pop();
-				//Se ingresa el nuevo token a la pila
-				push(Aux->lexema);
+				//Se ingresa la palabra reservada a la pila
+				push(Aux->lexema);	
 				//Se avanza al siguiente caracter
 				Aux = Aux->liga;
-				//Se inserta un simbolo no terminal V
-				push(" ");
-				push("V");
-				//Se imprime la derivacion
-				ImprimeDerivacion();
-				//Si quedan simbolos por analizar
-				if( Aux != NULL )
+				//Se espera que el primer caracter despues de la palabra reservada sea un ID
+				if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") )
 				{
-					while(Aux != NULL)
+					push(" ");
+					push("ID");
+					//Mientras se empiece con un ID
+					while( Aux != NULL && !strcmp(Aux->tipotoken, "ID") )
 					{
-						//Si hay un simbolo no terminal al frente de la pila, y es V
-						if( !strcmp(QPila->derivacion, "V") )
+						ImprimeDerivacion();
+						Aux = Aux->liga;
+						//Si el siguiente es un =, ocurre una asignacion
+						if( Aux != NULL && !strcmp(Aux->tipotoken, "AS") )
 						{
-							//Si el token actual es un identificador
-							if (!strcmp(Aux->tipotoken, "ID"))
+							push(" = ");
+							push("S");
+							ImprimeDerivacion();
+							Aux = Aux->liga;
+							//mientras los siguientes sean no terminales S
+							while( Aux != NULL && !strcmp(QPila->derivacion, "S") )
 							{
-								//Si hay un simbolo no terminal al frente de la pila, lo elimina
 								pop();
-								//Se inserta un identificador en la pila
-								push("ID");
-								ImprimeDerivacion();
-								//Si el siguiente caracter es =, ocurre una asignacion
-								if( Aux->liga != NULL && !strcmp(Aux->liga->tipotoken, "AS") )
+								if( Aux != NULL && ( !strcmp(Aux->tipotoken, "NE") || !strcmp(Aux->tipotoken, "ND") || !strcmp(Aux->tipotoken, "NX") || !strcmp(Aux->tipotoken, "ID") ) )
 								{
+									if( !strcmp(Aux->tipotoken, "ID") )
+										push("ID");
+									else
+										push("num");
+									ImprimeDerivacion();
 									Aux = Aux->liga;
-									//Entonces se agrega la asignacion a la pila
-									push(" ");
-									push("=");
-									if( Aux->liga != NULL )
+									if( Aux != NULL && !strcmp(Aux->lexema, ";") )
 									{
+										Aux = Aux->liga;
+										push(";");
+										ImprimeDerivacion();
+										break;
+									}else if( Aux != NULL && !strcmp(Aux->lexema, ",") )
+									{
+										push(", ");
+										push("ID");
+										ImprimeDerivacion();
+										Aux = Aux->liga;
+										break;
+									}
+									else if( Aux != NULL && !strcmp(Aux->tipotoken, "OA") )
+									{
+										push(" ");
+										push(Aux->lexema);
 										Aux = Aux->liga;
 										push(" ");
 										push("S");
-									}else{
+										ImprimeDerivacion();
+									}
+									else
+									{
 										printf("Error Sintactico\n");
 										return;
 									}
 								}
-							}else{	//Si no, ocurre un error sintactico
-								printf("Error Sintactico\n");
-								return;
 							}
-						}else if( !strcmp(Aux->lexema, ",") ){ //Si se encuentra una coma
-							//Se inserta una coma y un simbolo no terminal V
-							push(",");
-							push(" ");
-							push("V");
-							//Se imprime la derivacion
-							ImprimeDerivacion();
-						}else if( !strcmp(Aux->lexema, ";") ){	//Si se encuentra un punto y coma
-							push(";");							//Es el fin de la declaracion
-							ImprimeDerivacion();				//Se imprime la derivacion
-						}else{	//Si no, ocurre un error sintactico
-							printf("Error Sintactico\n");
-							return;
 						}
-						//Se avanza al siguiente caracter
-						Aux = Aux->liga;
+						else if( Aux != NULL && !strcmp(Aux->lexema, ",") )
+						{//Sino, si es una , se espera un ID en el siguiente ciclo
+							push(", ");
+							push("ID");
+							ImprimeDerivacion();
+							Aux = Aux->liga;
+						}
+						else if( Aux != NULL && !strcmp(Aux->lexema, ";") )
+						{//Sino, si es un ; se termina la instrucción
+							push(";");
+							ImprimeDerivacion();
+							Aux = Aux->liga;
+							break;
+						}
 					}
-				}else{ //Despues de la palabra reservada, se espera un identificador
-				printf("Error Sintactico\n"); //Si no lo hay, es un error sintactico
-				return;
-				}	
-			}else{ //Si no es ningun token reconocible, es un error sintactico
-				printf("Error Sintactico\n");
-				return;
+					if( strcmp(QPila->derivacion, ";") )
+					{//Si el ultimo caracter no fue ; es error sintactico
+						printf("Error Sintactico\n");
+						return;
+					}
+				}else{ //Si no, es un error sintactico
+					printf("Error Sintactico\n");
+					return;
+				}
+			}else{ //Si no, se inserta un no terminal V
+				push("V");
+				ImprimeDerivacion();
 			}
 		}
+		Aux = Aux->liga;
 	}
 }
 
