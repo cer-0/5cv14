@@ -50,9 +50,9 @@ int main(void)
 	const char* programa = "programa.txt";
 
 	//En lugar de ingresar una cadena, se leen del archivo
-	printf("Todo bien\n");
 	LeeArchivo(archivo);
 	AnalizadorSintactico();
+	printf("BIEN\n");
 	EscribeArchivo(programa);
 	system("PAUSE");
 	return 0;
@@ -254,6 +254,21 @@ void EscribeArchivo(const char* arc)
 		fprintf(Archivo, ".MODEL SMALL\n");
 		fprintf(Archivo, ".STACK\n");
 		fprintf(Archivo, ".DATA\n");
+		Aux = PPila;
+		while( Aux != NULL )
+		{
+			//Si se encuentra una palabra reservada
+			//Tiene que declarar una variable
+			if( !strcmp( Aux->tipotoken, "PR" ) )
+			{
+				Aux = Aux->liga;
+				fprintf(Archivo, "%s DW ??\n", Aux->lexema);
+				//Se salta el punto y coma
+				Aux = Aux->liga;
+				//Avanza a la siguiente declaracion
+				Aux = Aux->liga;
+			}
+		}
 		fclose(Archivo);		
 	}
 	else

@@ -1,1 +1,1 @@
-int pene , pene , x ;
+int z , y , x ;
