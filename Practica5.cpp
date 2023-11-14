@@ -463,10 +463,58 @@ void AnalizadorSintactico(void)
 					printf("Error Sintactico\n");
 					return;
 				}
-			}else{ //Si no, se inserta un no terminal V
-				push("V");
-				ImprimeDerivacion();
 			}
+			//Si empieza con ID
+			if( !strcmp(Aux->tipotoken, "ID") )
+			{
+				push("ID");
+				ImprimeDerivacion();
+				Aux = Aux->liga;
+				//Si el siguiente es un =, ocurre una asignacion
+				if( Aux != NULL && !strcmp(Aux->tipotoken, "AS") )
+				{
+					push(" = ");
+					push("S");
+					ImprimeDerivacion();
+					Aux = Aux->liga;
+					//mientras los siguientes sean no terminales S
+					while( Aux != NULL && !strcmp(QPila->derivacion, "S") )
+					{
+						pop();
+						if( Aux != NULL && ( !strcmp(Aux->tipotoken, "NE") || !strcmp(Aux->tipotoken, "ND") || !strcmp(Aux->tipotoken, "NX") || !strcmp(Aux->tipotoken, "ID") ) )
+						{
+							if( !strcmp(Aux->tipotoken, "ID") )
+								push("ID");
+							else
+								push("num");
+							ImprimeDerivacion();
+							Aux = Aux->liga;
+							if( Aux != NULL && !strcmp(Aux->lexema, ";") )
+							{
+								Aux = Aux->liga;
+								push(";");
+								ImprimeDerivacion();
+								break;
+							}else if( Aux != NULL && !strcmp(Aux->tipotoken, "OA") ){
+								push(" ");
+								push(Aux->lexema);
+								Aux = Aux->liga;
+								push(" ");
+								push("S");
+								ImprimeDerivacion();
+							}else {
+								printf("Error Sintactico\n");
+								return;
+							}
+						}
+					}
+				}
+			}
+		}
+		if( strcmp(QPila->derivacion, ";") )
+		{//Si el ultimo caracter no fue ; es error sintactico
+			printf("Error Sintactico\n");
+			return;
 		}
 		Aux = Aux->liga;
 	}
