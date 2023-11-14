@@ -1,1 +1,1 @@
-x = 5 + 6 * y / 9E6 ;
+int pene , pene , pene ;

@@ -372,103 +372,55 @@ void AnalizadorSintactico(void)
 		{
 			//Se elimina de la pila
 			pop();
-			//Si el primer token es una palabra reservada, entonces es una declaracion/asignacion
+			//Si el primer token es una palabra reservada, entonces es una declaracion
 			if( !(strcmp(Aux->tipotoken, "PR")))
 			{
+				//Se declara una variable que guarda el tipo de dato declarado
+				char tipodato [5];
+				strcpy(tipodato,Aux->lexema);
 				//Se ingresa la palabra reservada a la pila
 				push(Aux->lexema);	
+				push(" ");
+				push("V");
+				ImprimeDerivacion();
 				//Se avanza al siguiente caracter
 				Aux = Aux->liga;
-				//Se espera que el primer caracter despues de la palabra reservada sea un ID
-				if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") )
-				{
-					push(" ");
-					push("ID");
-					//Mientras se empiece con un ID
-					while( Aux != NULL && !strcmp(Aux->tipotoken, "ID") )
+				//Mientras los siguientes no sean no terminales V
+				while ( Aux!= NULL && !strcmp(QPila->derivacion, "V")){
+					pop();
+					if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") )
 					{
-						ImprimeDerivacion();
+						push("ID");
+						strcpy(Aux->tipdat,tipodato);
 						Aux = Aux->liga;
-						//Si el siguiente es un =, ocurre una asignacion
-						if( Aux != NULL && !strcmp(Aux->tipotoken, "AS") )
-						{
-							push(" = ");
-							push("S");
+						if ( Aux != NULL && !strcmp(Aux->lexema, ",") ){
+							push(" ");
+							push(",");
+							push(" ");
+							push("V");
 							ImprimeDerivacion();
 							Aux = Aux->liga;
-							//mientras los siguientes sean no terminales S
-							while( Aux != NULL && !strcmp(QPila->derivacion, "S") )
-							{
-								pop();
-								if( Aux != NULL && ( !strcmp(Aux->tipotoken, "NE") || !strcmp(Aux->tipotoken, "ND") || !strcmp(Aux->tipotoken, "NX") || !strcmp(Aux->tipotoken, "ID") ) )
-								{
-									if( !strcmp(Aux->tipotoken, "ID") )
-										push("ID");
-									else
-										push("num");
-									ImprimeDerivacion();
-									Aux = Aux->liga;
-									if( Aux != NULL && !strcmp(Aux->lexema, ";") )
-									{
-										Aux = Aux->liga;
-										push(";");
-										ImprimeDerivacion();
-										break;
-									}else if( Aux != NULL && !strcmp(Aux->lexema, ",") )
-									{
-										push(", ");
-										push("ID");
-										ImprimeDerivacion();
-										Aux = Aux->liga;
-										break;
-									}
-									else if( Aux != NULL && !strcmp(Aux->tipotoken, "OA") )
-									{
-										push(" ");
-										push(Aux->lexema);
-										Aux = Aux->liga;
-										push(" ");
-										push("S");
-										ImprimeDerivacion();
-									}
-									else
-									{
-										printf("Error Sintactico\n");
-										return;
-									}
-								}
-							}
-						}
-						else if( Aux != NULL && !strcmp(Aux->lexema, ",") )
-						{//Sino, si es una , se espera un ID en el siguiente ciclo
-							push(", ");
-							push("ID");
-							ImprimeDerivacion();
-							Aux = Aux->liga;
-						}
-						else if( Aux != NULL && !strcmp(Aux->lexema, ";") )
+						}else if( Aux != NULL && !strcmp(Aux->lexema, ";") )
 						{//Sino, si es un ; se termina la instrucción
 							push(";");
 							ImprimeDerivacion();
 							Aux = Aux->liga;
 							break;
+						}else{
+							printf("Error Sintactico\n");
+							return;
 						}
-					}
-					if( strcmp(QPila->derivacion, ";") )
-					{//Si el ultimo caracter no fue ; es error sintactico
-						printf("Error Sintactico\n");
-						return;
-					}
-				}else{ //Si no, es un error sintactico
-					printf("Error Sintactico\n");
-					return;
+					}else{
+							printf("Error Sintactico\n");
+							return;
+						}
+
 				}
 			}
 			//Si empieza con ID
 			if( !strcmp(Aux->tipotoken, "ID") )
 			{
 				push("ID");
-				ImprimeDerivacion();
 				Aux = Aux->liga;
 				//Si el siguiente es un =, ocurre una asignacion
 				if( Aux != NULL && !strcmp(Aux->tipotoken, "AS") )
@@ -487,7 +439,6 @@ void AnalizadorSintactico(void)
 								push("ID");
 							else
 								push("num");
-							ImprimeDerivacion();
 							Aux = Aux->liga;
 							if( Aux != NULL && !strcmp(Aux->lexema, ";") )
 							{
