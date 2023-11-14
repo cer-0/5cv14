@@ -164,6 +164,7 @@ int AnalizadorLexico( const char* lex )
 		case ';':
 		case ',':
 			tiptok = 9;
+			i++;
 			break;
 		
 		default:
@@ -367,77 +368,55 @@ void GuardaTablaSimbolos(const char* arc)
 void AnalizadorSintactico(void)
 {
 	Aux = PTabla;
-	printf("=> S\n");
-	while( Aux != NULL )
+	printf("S\n");
+	if( Aux != NULL )
 	{
 		//Si el token actual es un numero
-		if( !(strcmp(Aux->tipotoken, "NE")) || !(strcmp(Aux->tipotoken, "ND")) || !(strcmp(Aux->tipotoken, "NX")) )
+		if( !(strcmp(Aux->tipotoken, "PR")))
 		{
 			pop();
-			push("num");
+			push(Aux->lexema);
 			Aux = Aux->liga;
-			if(Aux != NULL)
-			{
-				if( !strcmp(Aux->lexema, "*") )
-				{
-					push(" ");
-					push("*");
-					push(" ");
-					if( Aux->liga != NULL )
-						push("S");
-				}
-				else if( !strcmp(Aux->lexema, "/") )
-				{
-					push(" ");
-					push("/");
-					push(" ");
-					if( Aux->liga != NULL )
-					push("S");
-				}
-				else
-				{
-					pop();
-					push("E");
-				}
-				if(!strcmp(QPila->derivacion, "E"))
-				{
-					ImprimeDerivacion();
-					pop();
-					push("num");
-					if( !strcmp(Aux->lexema, "+") )
-					{
-						push(" ");
-						push("+");
-						push(" ");
-						if( Aux->liga != NULL )
-							push("S");
-					}
-					else if( !strcmp(Aux->lexema, "-") )
-					{
-						push(" ");
-						push("-");
-						push(" ");
-						if( Aux->liga != NULL )
-							push("S");
-					}
-					else
-					{
-						printf("Error Sintactico\n");
-						return;	
-					}	
-				}
-				Aux = Aux->liga;	
-			}
+			push(" ");
+			push("V");
 			ImprimeDerivacion();
-		}
-		else
-		{
+			while(Aux != NULL)
+			{
+				if( !strcmp(QPila->derivacion, "V") )
+				{
+					if (!strcmp(Aux->tipotoken, "ID"))
+					{
+						
+						pop();
+						push("ID");
+
+						
+					}else{
+						printf("Error Sintactico\n");
+						return;
+					}
+					
+				}else if( !strcmp(Aux->lexema, ",") ){
+					push(" ");
+					push(",");
+					push("V");
+					ImprimeDerivacion();
+				}else if( !strcmp(Aux->lexema, ";") ){
+					push(";");
+					ImprimeDerivacion();
+				}else{
+					printf("Error Sintactico\n");
+					return;
+				}
+				Aux = Aux->liga;
+				
+			}
+
+		}else{
 			printf("Error Sintactico\n");
 			return;
 		}
 	}
-	if( strcmp(QPila->derivacion, "num") )
-		printf("Error Sintactico\n");
 }
 
 void push(const char* a)
