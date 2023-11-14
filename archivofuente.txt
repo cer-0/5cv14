@@ -1,1 +1,1 @@
-int pene , pene , pene ;
+int pene , pene , x ;

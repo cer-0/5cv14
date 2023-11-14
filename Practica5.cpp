@@ -30,6 +30,7 @@ TSimbolos *PPila, *QPila, *AuxPila, *NuevoPila;
 int IdentificaTipo( const char* );
 int AnalizadorLexico(const char* );
 void LeeArchivo(const char*);
+void EscribeArchivo(const char*);
 void AgregaTablaSimbolos(const char*, int);
 //void GuardaTablaSimbolos(const char*);
 void AnalizadorSintactico(void);
@@ -45,11 +46,14 @@ int indID=0,indNE=201,indND=301,indNX=401;
 int main(void)	
 {
 	
-	const char* archivo = "archivofuente.txt"; 
-	
+	const char* archivo = "archivofuente.txt";
+	const char* programa = "programa.txt";
+
 	//En lugar de ingresar una cadena, se leen del archivo
+	printf("Todo bien\n");
 	LeeArchivo(archivo);
 	AnalizadorSintactico();
+	EscribeArchivo(programa);
 	system("PAUSE");
 	return 0;
 }
@@ -236,6 +240,21 @@ void LeeArchivo(const char* arc)
 			int tipo = IdentificaTipo(cadena);		
 			AgregaTablaSimbolos(cadena, tipo);
 		}
+		fclose(Archivo);
+	}
+	else
+		printf("Ocurrio un error al intentar abrir el archivo\n\n");
+}
+
+void EscribeArchivo(const char* arc)
+{
+	FILE *Archivo = fopen("programa.txt", "w");
+	if( Archivo != NULL ) //Si el archivo se abre correctamente
+	{
+		fprintf(Archivo, ".MODEL SMALL\n");
+		fprintf(Archivo, ".STACK\n");
+		fprintf(Archivo, ".DATA\n");
+		fclose(Archivo);		
 	}
 	else
 		printf("Ocurrio un error al intentar abrir el archivo\n\n");
