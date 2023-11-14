@@ -1,1 +1,1 @@
-int variable ;
+int v = 5 ;
