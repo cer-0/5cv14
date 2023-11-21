@@ -38,10 +38,21 @@ void push(const char* );
 void pop();
 void top();
 void ImprimeDerivacion();
+void VaciaPila(void);
 
 char *palres[] = {"int", "float"};
 
 int indID=0,indNE=201,indND=301,indNX=401;
+
+void ImprimeTabla()
+{
+	Aux = PTabla;
+	while(Aux != NULL)
+	{
+		printf("%s %s %s %s %d\n", Aux->lexema, Aux->tipotoken, Aux->tipdat, Aux->regla, Aux->ind);
+		Aux = Aux->liga;
+	}
+}
 
 int main(void)	
 {
@@ -51,9 +62,9 @@ int main(void)
 
 	//En lugar de ingresar una cadena, se leen del archivo
 	LeeArchivo(archivo);
+	//ImprimeTabla();
 	AnalizadorSintactico();
-	printf("BIEN\n");
-	EscribeArchivo(programa);
+	//EscribeArchivo(programa);
 	system("PAUSE");
 	return 0;
 }
@@ -261,7 +272,15 @@ void EscribeArchivo(const char* arc)
 			//Tiene que declarar una variable
 			if( !strcmp( Aux->tipotoken, "PR" ) )
 			{
+				//Salta al identificador
 				Aux = Aux->liga;
+				//Mientras se encuentre identificadores
+				while( !strcmp( Aux->tipotoken, "ID" ) )
+				{
+					fprintf(Archivo, "%s DW ??\n", Aux->lexema);
+					//Salta al siguiente caracter
+					Aux = Aux->liga;
+				}
 				fprintf(Archivo, "%s DW ??\n", Aux->lexema);
 				//Se salta el punto y coma
 				Aux = Aux->liga;
@@ -397,10 +416,10 @@ void AnalizadorSintactico(void)
 {
 	Aux = PTabla;
 	push("G");
-	ImprimeDerivacion();
 	//Mientras haya simbolos por analizar
 	while( Aux != NULL )
 	{
+		ImprimeDerivacion();
 		//Si hay un simbolo no terminal al frente de la pila, y es G
 		if( !strcmp(QPila->derivacion, "G") )
 		{
@@ -419,7 +438,7 @@ void AnalizadorSintactico(void)
 				ImprimeDerivacion();
 				//Se avanza al siguiente caracter
 				Aux = Aux->liga;
-				//Mientras los siguientes no sean no terminales V
+				//Mientras los siguientes sean no terminales V
 				while ( Aux!= NULL && !strcmp(QPila->derivacion, "V")){
 					pop();
 					if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") )
@@ -439,7 +458,6 @@ void AnalizadorSintactico(void)
 							push(";");
 							ImprimeDerivacion();
 							Aux = Aux->liga;
-							break;
 						}else{
 							printf("Error Sintactico\n");
 							return;
@@ -448,12 +466,8 @@ void AnalizadorSintactico(void)
 							printf("Error Sintactico\n");
 							return;
 						}
-
 				}
-			}
-			//Si empieza con ID
-			if( !strcmp(Aux->tipotoken, "ID") )
-			{
+			} else if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") ) { //Si empieza con ID 
 				push("ID");
 				Aux = Aux->liga;
 				//Si el siguiente es un =, ocurre una asignacion
@@ -501,7 +515,8 @@ void AnalizadorSintactico(void)
 			printf("Error Sintactico\n");
 			return;
 		}
-		Aux = Aux->liga;
+		VaciaPila();
+		push("G");
 	}
 }
 
@@ -533,19 +548,21 @@ void pop()
 				AuxPila = AuxPila->liga;
 			QPila = AuxPila;
 			AuxPila = QPila->liga;
+			QPila->liga = NULL;
 			free(AuxPila);
 		}
 		else
 		{
 			free(AuxPila);
 			PPila = NULL;
+			QPila = NULL;
 		}	
 	}
 }
 
 void top()
 {
-	printf("%s", QPila->derivacion);
+	printf("%s\n", QPila->derivacion);
 }
 
 void ImprimeDerivacion()
@@ -558,4 +575,10 @@ void ImprimeDerivacion()
 		AuxPila = AuxPila->liga;
 	}
 	printf("\n");
+}
+
+void VaciaPila()
+{
+	while( PPila != NULL )
+		pop();
 }
