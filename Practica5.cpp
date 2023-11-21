@@ -425,47 +425,53 @@ void AnalizadorSintactico(void)
 		{
 			//Se elimina de la pila
 			pop();
-			//Si el primer token es una palabra reservada, entonces es una declaracion
-			if( !(strcmp(Aux->tipotoken, "PR")))
+			//Si el primer token es una palabra reservada
+			if( !(strcmp(Aux->tipotoken, "PR")) )
 			{
-				//Se declara una variable que guarda el tipo de dato declarado
-				char tipodato [5];
-				strcpy(tipodato,Aux->lexema);
-				//Se ingresa la palabra reservada a la pila
-				push(Aux->lexema);	
-				push(" ");
-				push("V");
-				ImprimeDerivacion();
-				//Se avanza al siguiente caracter
-				Aux = Aux->liga;
-				//Mientras los siguientes sean no terminales V
-				while ( Aux!= NULL && !strcmp(QPila->derivacion, "V")){
-					pop();
-					if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") )
-					{
-						push("ID");
-						strcpy(Aux->tipdat,tipodato);
-						Aux = Aux->liga;
-						if ( Aux != NULL && !strcmp(Aux->lexema, ",") ){
-							push(" ");
-							push(",");
-							push(" ");
-							push("V");
-							ImprimeDerivacion();
+				//Si el token es un int o float, se trata de una declaracion
+				if( !(strcmp(Aux->lexema, "int")) || !(strcmp(Aux->lexema, "float")) )
+				{
+					//Se declara una variable que guarda el tipo de dato declarado
+					char tipodato [5];
+					strcpy(tipodato,Aux->lexema);
+					//Se ingresa la palabra reservada a la pila
+					push(Aux->lexema);	
+					push(" ");
+					push("V");
+					ImprimeDerivacion();
+					//Se avanza al siguiente caracter
+					Aux = Aux->liga;
+					//Mientras los siguientes sean no terminales V
+					while ( Aux!= NULL && !strcmp(QPila->derivacion, "V")){
+						pop();
+						if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") )
+						{
+							push("ID");
+							strcpy(Aux->tipdat,tipodato);
 							Aux = Aux->liga;
-						}else if( Aux != NULL && !strcmp(Aux->lexema, ";") )
-						{//Sino, si es un ; se termina la instrucción
-							push(";");
-							ImprimeDerivacion();
-							Aux = Aux->liga;
+							if ( Aux != NULL && !strcmp(Aux->lexema, ",") ){
+								push(" ");
+								push(",");
+								push(" ");
+								push("V");
+								ImprimeDerivacion();
+								Aux = Aux->liga;
+							}else if( Aux != NULL && !strcmp(Aux->lexema, ";") )
+							{//Sino, si es un ; se termina la instrucción
+								push(";");
+								ImprimeDerivacion();
+								Aux = Aux->liga;
+							}else{
+								printf("Error Sintactico\n");
+								return;
+							}
 						}else{
 							printf("Error Sintactico\n");
 							return;
 						}
-					}else{
-							printf("Error Sintactico\n");
-							return;
-						}
+					}
+				} else if( !strcmp(Aux->lexema, "while") ) {
+					//GRAMATICA DEL WHILE VA ACA
 				}
 			} else if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") ) { //Si empieza con ID 
 				push("ID");
