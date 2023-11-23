@@ -9,8 +9,8 @@
 */
 #include <stdio.h>
 #include <string.h>
-#include <conio.h>
-#include <windows.h>
+#include <ctype.h>
+#include <stdlib.h>
 
 struct TSimbolos
 {
@@ -72,7 +72,8 @@ int main(void)
 		if( !AnalizadorSintactico() )
 			EscribeEnsamblador(programa);
 	}
-	system("PAUSE");
+	printf("Presione una tecla para continuar...");
+	getchar();
 	return 0;
 }
 
