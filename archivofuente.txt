@@ -2,7 +2,15 @@ int a;
 int y;
 y = 5;
 a = 3 * y + 5;
-while( a == 3 )
+while( a == 3 && b == c )
 {
-
+    y = 8;
+    a = 4;
+    while( 5 == 7 )
+    {
+        w = 5 * u;
+    }
+    xy = 57;
+    d = 8.2;
 }
+f = 3;
