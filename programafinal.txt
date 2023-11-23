@@ -3,11 +3,34 @@
 .stack
 
 .data
-	a DW ??
-	y DW ??
-	T0 DW ??
-	T1 DW ??
+	a DW ?
+	y DW ?
+	T0 DW ?
+	T1 DW ?
+	T2 DW ?
 
 .code
-	begin:
+begin:
+	mov ax, @data
+	mov ds, ax
+
+	mov ax, 5
+	mov T0, ax
+	mov ax, T0
+	mov y, ax
+
+	mov ax, 3
+	mov bx, y
+	mul bx
+	mov T0, ax
+
+	mov ax, T0
+	add ax, 5
+	mov T1, ax
+
+	mov ax, T1
+	mov T2, ax
+	mov ax, T2
+	mov a, ax
+
 	END begin

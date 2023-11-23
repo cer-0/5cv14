@@ -322,7 +322,7 @@ void EscribeEnsamblador(const char* arc)
 					Aux = Aux->liga;
 					//Si se encuentra un identificador
 					if( !strcmp( Aux->tipotoken, "ID" ) )
-						fprintf(Archivo, "\t%s DW ??\n", Aux->lexema);
+						fprintf(Archivo, "\t%s DW ?\n", Aux->lexema);
 					//Salta al punto y coma
 					Aux = Aux->liga;
 				}
@@ -361,10 +361,113 @@ void EscribeEnsamblador(const char* arc)
 		}
 		//Genera el numero de temporales totales necesarios
 		for( int c=0; c<tottemp; c++ )
-			fprintf( Archivo, "\tT%d DW ??\n", c );
+			fprintf( Archivo, "\tT%d DW ?\n", c );
 		fprintf( Archivo, "\n");
 		fprintf( Archivo, ".code\n");
-		fprintf( Archivo, "\tbegin:\n");
+		fprintf( Archivo, "begin:\n");
+		fprintf( Archivo, "\tmov ax, @data\n");
+		fprintf( Archivo, "\tmov ds, ax\n\n");
+		//Ahora, genera el codigo del programa
+		Aux = PTabla;
+		while( Aux != NULL )
+		{
+			if( !strcmp( Aux->tipotoken, "ID" ) ) {	//Si se encuentra un identificador, es una asignacion
+				//Se recuerda la variable a la que se le va a asignar un valor
+				char asig[100];
+				strcpy( asig, Aux->lexema );
+				int numtemp = -1; //Esta variable cuenta los temporales que se van utilizando
+				//Salta a la asignacion
+				Aux = Aux->liga;
+				//Si el siguiente no es una asignacion, termina el programa
+				if( strcmp( Aux->tipotoken, "AS" ) )
+					return;
+				//Salta al primer ID o NUM
+				Aux = Aux->liga;
+				//Se recuerda el primer valor que aparece despues del signo =, por si solo existe ese en la instruccion
+				char prim[100];
+				strcpy( prim, Aux->lexema );
+				while( strcmp( Aux->derivacion, "SEP" ) )	//Mientras queden tokens por analizar
+				{
+					//Si los tokens siguientes, incluyendo el actual, tienen juntos la estructura:
+					//( ID OA ID | ID OA NUM | NUM OA ID | NUM OA NUM )
+					//Cuenta otro temporal
+					if( Aux != NULL )
+						if( Aux->liga != NULL )
+							if( Aux->liga->liga != NULL )
+								if( ( !strcmp( Aux->derivacion, "ID" ) || !strcmp( Aux->derivacion, "NUM" ) ) && ( !strcmp( Aux->liga->derivacion, "OA" ) ) && ( !strcmp( Aux->liga->liga->derivacion, "ID" ) || !strcmp( Aux->liga->liga->derivacion, "NUM" ) ) )
+								{
+									//Se va a utilizar el siguiente temporal
+									numtemp++;
+									//Si el operador es una suma
+									if( !strcmp( Aux->liga->lexema, "+" ) )
+									{
+										//Genera el codigo ensamblador para la suma
+										//Si ya se utilizo al menos un temporal
+										if( numtemp > 0 )
+											fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
+										else
+											fprintf(Archivo, "\tmov ax, %s\n", Aux->lexema);
+										fprintf(Archivo, "\tadd ax, %s\n", Aux->liga->liga->lexema);
+										fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
+									} else if( !strcmp( Aux->liga->lexema, "-" ) ) //Si el operador es una resta
+									{
+										//Genera el codigo ensamblador para la resta
+										if( numtemp > 0 )
+											fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
+										else
+											fprintf(Archivo, "\tmov ax, %s\n", Aux->lexema);
+										fprintf(Archivo, "\tsub ax, %s\n", Aux->liga->liga->lexema);
+										fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
+									} else if( !strcmp( Aux->liga->lexema, "*" ) ) //Si el operador es una multiplicacion
+									{
+										//Genera el codigo ensamblador para la multiplicacion
+										if( numtemp > 0 )
+											fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
+										else
+											fprintf(Archivo, "\tmov ax, %s\n", Aux->lexema);
+										fprintf(Archivo, "\tmov bx, %s\n", Aux->liga->liga->lexema);
+										fprintf(Archivo, "\tmul bx\n");
+										fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
+									} else if( !strcmp( Aux->liga->lexema, "/" ) ) //Si el operador es una division
+									{
+										//Genera el codigo ensamblador para la division
+										if( numtemp > 0 )
+											fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
+										else
+											fprintf(Archivo, "\tmov ax, %s\n", Aux->lexema);
+										fprintf(Archivo, "\tmov bx, %s\n", Aux->liga->liga->lexema);
+										fprintf(Archivo, "\tdiv bx\n");
+										fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
+									}
+									//Salta hasta el OA
+									Aux = Aux->liga;
+								}
+					//Salta al siguiente caracter. Si antes salto al OA, se desplaza dos tokens
+					Aux = Aux->liga;
+				}
+				//Genera el codigo ensamblador para la asignacion
+				numtemp++;
+				if( numtemp > 0 ) //Si se uso al menos un temporal, se asigna el ultimo temporal a la variable
+				{
+					fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
+					fprintf(Archivo, "\tmov T%d, ax\n", numtemp);
+					fprintf(Archivo, "\tmov ax, T%d\n", numtemp);
+					fprintf(Archivo, "\tmov %s, ax\n\n", asig);
+				} else {	//Sino, se asigna el primer valor despues del token = 
+					fprintf(Archivo, "\tmov ax, %s\n", prim);
+					fprintf(Archivo, "\tmov T%d, ax\n", numtemp);
+					fprintf(Archivo, "\tmov ax, T%d\n", numtemp);
+					fprintf(Archivo, "\tmov %s, ax\n\n", asig);
+				}
+			}
+			else
+			{
+				while( Aux != NULL && strcmp( Aux->tipotoken, "SEP" ) )
+					Aux = Aux->liga;
+			}
+			//Avanza a la siguiente instruccion
+			Aux = Aux->liga;
+		}
 		fprintf( Archivo, "\tEND begin\n");
 		fclose(Archivo);		
 	}
