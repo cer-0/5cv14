@@ -2,3 +2,7 @@ int a;
 int y;
 y = 5;
 a = 3 * y + 5;
+while( a == 3 )
+{
+
+}

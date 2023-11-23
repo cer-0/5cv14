@@ -40,7 +40,7 @@ void top();
 void ImprimeDerivacion();
 void VaciaPila(void);
 
-char *palres[] = {"int", "float"};
+char *palres[] = {"int", "float", "while"};
 
 int indID=0,indNE=201,indND=301,indNX=401;
 
@@ -69,8 +69,8 @@ int main(void)
 	if( !LeeArchivo(archivo) )
 	{
 		ImprimeTabla();
-		if( !AnalizadorSintactico() )
-			EscribeEnsamblador(programa);
+		/*if( !AnalizadorSintactico() )
+			EscribeEnsamblador(programa);*/
 	}
 	printf("Presione una tecla para continuar...");
 	getchar();
@@ -196,6 +196,16 @@ int AnalizadorLexico( const char* lex )
 			tiptok = 10;
 			i++;
 			break;
+		case '(':
+		case ')':
+			tiptok = 11;
+			i++;
+			break;
+		case '{':
+		case '}':
+			tiptok = 12;
+			i++;
+			break;
 		default:
 			break;
 	}
@@ -243,6 +253,10 @@ int IdentificaTipo( const char* cad )
 			return 9;
 		case 10:
 			return 10;
+		case 11:
+			return 11;
+		case 12:
+			return 12;
 		default:
 			return -1;
 	}
@@ -273,7 +287,30 @@ int LeeArchivo(const char* arc)
 				}
 				tipo = IdentificaTipo(";");		
 				AgregaTablaSimbolos(";", tipo);
-			}else{	//Sino, simplemente somete la cadena entera al Analisis Lexico
+			} else if( strlen(cadena) > 1 && ( cadena[strlen(cadena) -1] == '(' || cadena[strlen(cadena) -1] == ')' ) ) { //Sino, si la cadena que extrajo tiene mas de un caracter, y el ultimo es (
+				//Crea una nueva cadena, que no contiene el ultimo caracter
+				char cadsinpyc[1000];
+				strncpy( cadsinpyc, cadena, strlen(cadena)-1 );
+				//Realiza dos analisis lexicos: uno para la cadena sin el ;, y otro para el ;
+				int tipo = IdentificaTipo(cadsinpyc);
+				if( tipo != -1 )		
+					AgregaTablaSimbolos(cadsinpyc, tipo);
+				else
+				{
+					printf("Error Lexico. No se reconoce: %s\n", cadsinpyc);
+					return -1;
+				}
+				if( cadena[ strlen(cadena)-1 ] == '(' )
+				{
+					tipo = IdentificaTipo( "(" );		
+					AgregaTablaSimbolos("(", tipo);
+				}
+				else
+				{
+					tipo = IdentificaTipo( ")" );		
+					AgregaTablaSimbolos(")", tipo);
+				}
+			} else {	//Sino, simplemente somete la cadena entera al Analisis Lexico
 				int tipo = IdentificaTipo(cadena);
 				if( tipo != -1 )		
 					AgregaTablaSimbolos(cadena, tipo);
@@ -583,6 +620,38 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 					NuevoTabla->ind = 516;
 					strcpy( NuevoTabla->tipdat, "NULL" );
 					strcpy( NuevoTabla->regla, "S;" );
+					break;
+			}
+			break;
+		case 11:
+			strcpy(NuevoTabla->tipotoken, "PAR");
+			switch( lex[0] )
+			{
+				case '(':
+					NuevoTabla->ind = 701;
+					strcpy(NuevoTabla->tipdat, "NULL");
+					strcpy(NuevoTabla->regla, "(S)");
+					break;
+				case ')':
+					NuevoTabla->ind = 702;
+					strcpy(NuevoTabla->tipdat, "NULL");
+					strcpy(NuevoTabla->regla, "(S)");
+					break;
+			}
+			break;
+		case 12:
+			strcpy(NuevoTabla->tipotoken, "LLA");
+			switch( lex[0] )
+			{
+				case '{':
+					NuevoTabla->ind = 801;
+					strcpy(NuevoTabla->tipdat, "NULL");
+					strcpy(NuevoTabla->regla, "{S}");
+					break;
+				case '}':
+					NuevoTabla->ind = 802;
+					strcpy(NuevoTabla->tipdat, "NULL");
+					strcpy(NuevoTabla->regla, "{S}");
 					break;
 			}
 			break;
