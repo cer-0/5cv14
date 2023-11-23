@@ -5,7 +5,7 @@
 	Labardini
   Compiladores 5CV14
   Profesor: Jesus Mora Jain
-  Practica 5: Analizador sintactico
+  Programa: Compilador
 */
 #include <stdio.h>
 #include <string.h>
@@ -15,12 +15,12 @@
 struct TSimbolos
 {
 	//datos
-	char lexema[1000];
-	char tipotoken[3];
-	char tipdat[3];
-	char regla[10];
+	char lexema[100];
+	char tipotoken[100];
+	char tipdat[100];
+	char regla[100];
 	int ind;
-	char derivacion[1000];
+	char derivacion[100];
 	//liga
 	TSimbolos *liga;
 } *PTabla, *QTabla, *Aux, *NuevoTabla;
@@ -29,11 +29,11 @@ TSimbolos *PPila, *QPila, *AuxPila, *NuevoPila;
 
 int IdentificaTipo( const char* );
 int AnalizadorLexico(const char* );
-void LeeArchivo(const char*);
-void EscribeArchivo(const char*);
+int LeeArchivo(const char*);
+void EscribeEnsamblador(const char*);
 void AgregaTablaSimbolos(const char*, int);
 //void GuardaTablaSimbolos(const char*);
-void AnalizadorSintactico(void);
+int AnalizadorSintactico(void);
 void push(const char* );
 void pop();
 void top();
@@ -47,24 +47,31 @@ int indID=0,indNE=201,indND=301,indNX=401;
 void ImprimeTabla()
 {
 	Aux = PTabla;
+	printf("\t\t\t\tTABLA DE SIMBOLOS\n");
+	printf("-----------------------------------------------------------------------------------------\n");
+	printf("LEXEMA\t\tTIPO TOKEN\tTIPO DE DATO\tREGLA\t\tINDICE\n");
+	printf("-----------------------------------------------------------------------------------------\n");
 	while(Aux != NULL)
 	{
-		printf("%s %s %s %s %d\n", Aux->lexema, Aux->tipotoken, Aux->tipdat, Aux->regla, Aux->ind);
+		printf( "%s\t\t%s\t\t%s\t\t%s\t\t%d\n", Aux->lexema, Aux->tipotoken, Aux->tipdat, Aux->regla, Aux->ind );
 		Aux = Aux->liga;
 	}
+	printf("-----------------------------------------------------------------------------------------\n");
 }
 
 int main(void)	
 {
 	
 	const char* archivo = "archivofuente.txt";
-	const char* programa = "programa.txt";
+	const char* programa = "programafinal.txt";
 
 	//En lugar de ingresar una cadena, se leen del archivo
-	LeeArchivo(archivo);
-	//ImprimeTabla();
-	AnalizadorSintactico();
-	//EscribeArchivo(programa);
+	if( !LeeArchivo(archivo) )
+	{
+		ImprimeTabla();
+		if( !AnalizadorSintactico() )
+			EscribeEnsamblador(programa);
+	}
 	system("PAUSE");
 	return 0;
 }
@@ -240,7 +247,7 @@ int IdentificaTipo( const char* cad )
 	}
 }
 
-void LeeArchivo(const char* arc)
+int LeeArchivo(const char* arc)
 {
 	FILE *Archivo = fopen(arc, "r");
 	char cadena[1000];
@@ -255,52 +262,109 @@ void LeeArchivo(const char* arc)
 				char cadsinpyc[1000];
 				strncpy( cadsinpyc, cadena, strlen(cadena)-1 );
 				//Realiza dos analisis lexicos: uno para la cadena sin el ;, y otro para el ;
-				int tipo = IdentificaTipo(cadsinpyc);		
-				AgregaTablaSimbolos(cadsinpyc, tipo);
+				int tipo = IdentificaTipo(cadsinpyc);
+				if( tipo != -1 )		
+					AgregaTablaSimbolos(cadsinpyc, tipo);
+				else
+				{
+					printf("Error Lexico. No se reconoce: %s\n", cadsinpyc);
+					return -1;
+				}
 				tipo = IdentificaTipo(";");		
 				AgregaTablaSimbolos(";", tipo);
 			}else{	//Sino, simplemente somete la cadena entera al Analisis Lexico
-				int tipo = IdentificaTipo(cadena);		
-				AgregaTablaSimbolos(cadena, tipo);
+				int tipo = IdentificaTipo(cadena);
+				if( tipo != -1 )		
+					AgregaTablaSimbolos(cadena, tipo);
+				else
+				{
+					printf("Error Lexico. No se reconoce: %s\n", cadena);
+					return -1;
+				}
 			}
 		}
 		fclose(Archivo);
+		return 0;
 	}
 	else
+	{
 		printf("Ocurrio un error al intentar abrir el archivo\n\n");
+		return -1;
+	}
 }
 
-void EscribeArchivo(const char* arc)
+void EscribeEnsamblador(const char* arc)
 {
-	FILE *Archivo = fopen("programa.txt", "w");
+	FILE *Archivo = fopen(arc, "w");
+	int tottemp = 0;	//El total de temporales que se tienen que generar
 	if( Archivo != NULL ) //Si el archivo se abre correctamente
 	{
-		fprintf(Archivo, ".MODEL SMALL\n");
-		fprintf(Archivo, ".STACK\n");
-		fprintf(Archivo, ".DATA\n");
-		Aux = PPila;
+		fprintf(Archivo, ".model small\n\n");
+		fprintf(Archivo, ".stack\n\n");
+		fprintf(Archivo, ".data\n");
+		//Nota: La generacion de codigo objeto asume que el archivo fuente esta lexica y sintacticamente correcto
+
+		Aux = PTabla;
+		//Primero, recorre todo el archivo fuente en busqueda de declaraciones
+		//Para agregar las variables
+		//O de asignaciones
+		//Para agregar los temporales
 		while( Aux != NULL )
 		{
 			//Si se encuentra una palabra reservada
-			//Tiene que declarar una variable
 			if( !strcmp( Aux->tipotoken, "PR" ) )
 			{
-				//Salta al identificador
-				Aux = Aux->liga;
-				//Mientras se encuentre identificadores
-				while( !strcmp( Aux->tipotoken, "ID" ) )
+				//Si la palabra reservada es un tipo de dato, procesa una declaracion
+				if( !strcmp( Aux->lexema, "int" ) || !strcmp( Aux->lexema, "float" ) )
 				{
-					fprintf(Archivo, "%s DW ??\n", Aux->lexema);
-					//Salta al siguiente caracter
+					//Salta al identificador
+					Aux = Aux->liga;
+					//Si se encuentra un identificador
+					if( !strcmp( Aux->tipotoken, "ID" ) )
+						fprintf(Archivo, "\t%s DW ??\n", Aux->lexema);
+					//Salta al punto y coma
 					Aux = Aux->liga;
 				}
-				fprintf(Archivo, "%s DW ??\n", Aux->lexema);
-				//Se salta el punto y coma
+			} else if( !strcmp( Aux->tipotoken, "ID" ) ) {	//Si no, si se encuentra un identificador, es una asignacion
+				int numtemp = 0; //Esta variable cuenta el numero total de temporales que se necesitan para esta asignacion
+				//Salta a la asignacion
 				Aux = Aux->liga;
-				//Avanza a la siguiente declaracion
+				//Si el siguiente es una asignacion, cuenta un temporal
+				if( !strcmp( Aux->tipotoken, "AS" ) )
+					numtemp++;
+				//Salta al primer ID o NUM
 				Aux = Aux->liga;
+				while( strcmp( Aux->derivacion, "SEP" ) )	//Mientras queden tokens por analizar
+				{
+					//Si los tokens siguientes, incluyendo el actual, tienen juntos la estructura:
+					//( ID OA ID | ID OA NUM | NUM OA ID | NUM OA NUM )
+					//Cuenta otro temporal
+					if( Aux != NULL )
+						if( Aux->liga != NULL )
+							if( Aux->liga->liga != NULL )
+								if( ( !strcmp( Aux->derivacion, "ID" ) || !strcmp( Aux->derivacion, "NUM" ) ) && ( !strcmp( Aux->liga->derivacion, "OA" ) ) && ( !strcmp( Aux->liga->liga->derivacion, "ID" ) || !strcmp( Aux->liga->liga->derivacion, "NUM" ) ) )
+								{
+									numtemp++;
+									//Salta hasta el OA
+									Aux = Aux->liga;
+								}
+					//Salta al siguiente caracter. Si antes salto al OA, se desplaza dos tokens
+					Aux = Aux->liga;
+				}
+				//Actualiza los temporales necesarios totales
+				if( numtemp > tottemp )
+					tottemp = numtemp;
 			}
+			//Avanza a la siguiente instruccion
+			Aux = Aux->liga;
 		}
+		//Genera el numero de temporales totales necesarios
+		for( int c=0; c<tottemp; c++ )
+			fprintf( Archivo, "\tT%d DW ??\n", c );
+		fprintf( Archivo, "\n");
+		fprintf( Archivo, ".code\n");
+		fprintf( Archivo, "\tbegin:\n");
+		fprintf( Archivo, "\tEND begin\n");
 		fclose(Archivo);		
 	}
 	else
@@ -310,26 +374,31 @@ void EscribeArchivo(const char* arc)
 void AgregaTablaSimbolos(const char* lex, int tiptok)
 {
 	NuevoTabla = (TSimbolos *)malloc(sizeof(TSimbolos));
-	strcpy(NuevoTabla->lexema, lex);
+	strcpy( NuevoTabla->lexema, lex );
 	NuevoTabla->liga = NULL;
 	switch( tiptok )
 	{
 		case 1:
 			strcpy(NuevoTabla->tipotoken, "ID");
+			strcpy( NuevoTabla->tipdat, QTabla->lexema );
+			strcpy( NuevoTabla->regla, "D(D|A)*" );
 			NuevoTabla->ind = indID;
 			indID++;
 			break;
 		case 2:
 			strcpy(NuevoTabla->tipotoken, "PR");
-			if (!strcmp (lex,"int")){
+			if ( !strcmp(lex, "int" ) ){
 				NuevoTabla->ind = 517;
-			}else{
+				strcpy(NuevoTabla->tipdat, "int");
+				strcpy(NuevoTabla->regla, "int ID");
+			}else if( !strcmp( lex, "float" ) ){
 				NuevoTabla->ind = 518;
+				strcpy(NuevoTabla->tipdat, "float");
+				strcpy(NuevoTabla->regla, "float ID");
 			}
 			break;
 		case 3:
 			strcpy(NuevoTabla->tipotoken, "OR");
-			
 			if (!strcmp(lex,">")){
 				NuevoTabla->ind = 503;
 			}else if (!strcmp(lex,"<")){
@@ -348,6 +417,8 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 		case 4:
 			strcpy(NuevoTabla->tipotoken, "AS");
 			NuevoTabla->ind = 800; //Indice de la asignacion
+			strcpy( NuevoTabla->tipdat, "NULL" );
+			strcpy( NuevoTabla->regla, "ID = ID|num" );
 			break;
 		case 5:
 			strcpy(NuevoTabla->tipotoken, "OL");
@@ -380,6 +451,7 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 			break;
 		case 7:
 			strcpy(NuevoTabla->tipotoken, "NE");
+			strcpy( NuevoTabla->tipdat, "int" );
 			strcpy(NuevoTabla->regla, "Aritm.");
 			NuevoTabla->ind = indNE;
 			indNE++;
@@ -405,11 +477,10 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 					break;
 				case ';':
 					NuevoTabla->ind = 516;
+					strcpy( NuevoTabla->tipdat, "NULL" );
+					strcpy( NuevoTabla->regla, "S;" );
 					break;
 			}
-			break;
-		default:
-			printf("Error Lexico %s\n", lex);
 			break;
 	}
 	
@@ -425,7 +496,7 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 	}		
 }
 
-void AnalizadorSintactico(void)
+int AnalizadorSintactico(void)
 {
 	Aux = PTabla;
 	push("G");
@@ -441,6 +512,7 @@ void AnalizadorSintactico(void)
 			//Si el primer token es una palabra reservada
 			if( !(strcmp(Aux->tipotoken, "PR")) )
 			{
+				strcpy(Aux->derivacion, "PR");
 				//Si el token es un int o float, se trata de una declaracion
 				if( !(strcmp(Aux->lexema, "int")) || !(strcmp(Aux->lexema, "float")) )
 				{
@@ -459,10 +531,12 @@ void AnalizadorSintactico(void)
 						pop();
 						if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") )
 						{
+							strcpy(Aux->derivacion, "ID");
 							push("ID");
 							strcpy(Aux->tipdat,tipodato);
 							Aux = Aux->liga;
 							if ( Aux != NULL && !strcmp(Aux->lexema, ",") ){
+								strcpy(Aux->derivacion, "SEP");
 								push(" ");
 								push(",");
 								push(" ");
@@ -471,27 +545,30 @@ void AnalizadorSintactico(void)
 								Aux = Aux->liga;
 							}else if( Aux != NULL && !strcmp(Aux->lexema, ";") )
 							{//Sino, si es un ; se termina la instrucción
+								strcpy(Aux->derivacion, "SEP");
 								push(";");
 								ImprimeDerivacion();
 								Aux = Aux->liga;
-							}else{
-								printf("Error Sintactico\n");
-								return;
+							}else{ //Si el siguiente no es , o ; , es un error sintactico
+								printf("Error Sintactico: Se esperaba una , o un ;\n");
+								return -1;
 							}
 						}else{
-							printf("Error Sintactico\n");
-							return;
+							printf("Error Sintactico: Se esperaba un ID\n");
+							return -1;
 						}
 					}
 				} else if( !strcmp(Aux->lexema, "while") ) {
 					//GRAMATICA DEL WHILE VA ACA
 				}
 			} else if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") ) { //Si empieza con ID 
+				strcpy(Aux->derivacion, "ID");
 				push("ID");
 				Aux = Aux->liga;
 				//Si el siguiente es un =, ocurre una asignacion
 				if( Aux != NULL && !strcmp(Aux->tipotoken, "AS") )
 				{
+					strcpy(Aux->derivacion, "AS");
 					push(" = ");
 					push("S");
 					ImprimeDerivacion();
@@ -503,17 +580,25 @@ void AnalizadorSintactico(void)
 						if( Aux != NULL && ( !strcmp(Aux->tipotoken, "NE") || !strcmp(Aux->tipotoken, "ND") || !strcmp(Aux->tipotoken, "NX") || !strcmp(Aux->tipotoken, "ID") ) )
 						{
 							if( !strcmp(Aux->tipotoken, "ID") )
+							{
+								strcpy(Aux->derivacion, "ID");
 								push("ID");
+							}
 							else
+							{
+								strcpy(Aux->derivacion, "NUM");
 								push("num");
+							}
 							Aux = Aux->liga;
 							if( Aux != NULL && !strcmp(Aux->lexema, ";") )
 							{
+								strcpy(Aux->derivacion, "SEP");
 								Aux = Aux->liga;
 								push(";");
 								ImprimeDerivacion();
 								break;
 							}else if( Aux != NULL && !strcmp(Aux->tipotoken, "OA") ){
+								strcpy( Aux->derivacion, "OA" );
 								push(" ");
 								push(Aux->lexema);
 								Aux = Aux->liga;
@@ -521,8 +606,8 @@ void AnalizadorSintactico(void)
 								push("S");
 								ImprimeDerivacion();
 							}else {
-								printf("Error Sintactico\n");
-								return;
+								printf("Error Sintactico: Se esperaba un Operador Aritmetico o un ;\n");
+								return -1;
 							}
 						}
 					}
@@ -531,13 +616,14 @@ void AnalizadorSintactico(void)
 		}
 		if( strcmp(QPila->derivacion, ";") )
 		{//Si el ultimo caracter no fue ; es error sintactico
-			printf("Error Sintactico\n");
-			return;
+			printf("Error Sintactico: Se esperaba un ;\n");
+			return -1;
 		}
 		VaciaPila();
 		printf("\n");
 		push("G");
 	}
+	return 0;
 }
 
 void push(const char* a)
