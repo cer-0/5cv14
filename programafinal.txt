@@ -1,0 +1,13 @@
+.model small
+
+.stack
+
+.data
+	a DW ??
+	y DW ??
+	T0 DW ??
+	T1 DW ??
+
+.code
+	begin:
+	END begin
