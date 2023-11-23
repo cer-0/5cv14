@@ -247,9 +247,22 @@ void LeeArchivo(const char* arc)
 	if( Archivo != NULL ) //Si el archivo se abre correctamente
 	{
 		while( fscanf(Archivo,"%s",cadena) != EOF )
-		{			
-			int tipo = IdentificaTipo(cadena);		
-			AgregaTablaSimbolos(cadena, tipo);
+		{
+			//Si la cadena que extrajo tiene mas de un caracter, y el ultimo es ;
+			if( strlen(cadena) > 1 && cadena[strlen(cadena) -1] == ';' )
+			{
+				//Crea una nueva cadena, que no contiene el ultimo caracter
+				char cadsinpyc[1000];
+				strncpy( cadsinpyc, cadena, strlen(cadena)-1 );
+				//Realiza dos analisis lexicos: uno para la cadena sin el ;, y otro para el ;
+				int tipo = IdentificaTipo(cadsinpyc);		
+				AgregaTablaSimbolos(cadsinpyc, tipo);
+				tipo = IdentificaTipo(";");		
+				AgregaTablaSimbolos(";", tipo);
+			}else{	//Sino, simplemente somete la cadena entera al Analisis Lexico
+				int tipo = IdentificaTipo(cadena);		
+				AgregaTablaSimbolos(cadena, tipo);
+			}
 		}
 		fclose(Archivo);
 	}
