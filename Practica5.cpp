@@ -535,6 +535,7 @@ void AnalizadorSintactico(void)
 			return;
 		}
 		VaciaPila();
+		printf("\n");
 		push("G");
 	}
 }
