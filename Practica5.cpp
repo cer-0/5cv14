@@ -33,14 +33,14 @@ int LeeArchivo(const char*);
 void EscribeEnsamblador(const char*);
 void AgregaTablaSimbolos(const char*, int);
 //void GuardaTablaSimbolos(const char*);
-int AnalizadorSintactico(void);
+int AnalizadorSintactico(TSimbolos*, int);
 void push(const char* );
 void pop();
 void top();
 void ImprimeDerivacion();
 void VaciaPila(void);
 
-char *palres[] = {"int", "float"};
+char *palres[] = {"int", "float", "while"};
 
 int indID=0,indNE=201,indND=301,indNX=401;
 
@@ -69,8 +69,9 @@ int main(void)
 	if( !LeeArchivo(archivo) )
 	{
 		ImprimeTabla();
-		if( !AnalizadorSintactico() )
-			EscribeEnsamblador(programa);
+		AnalizadorSintactico(PTabla, 0);
+		/*if( !AnalizadorSintactico() )
+			EscribeEnsamblador(programa);*/
 	}
 	printf("Presione una tecla para continuar...");
 	getchar();
@@ -135,6 +136,7 @@ int AnalizadorLexico( const char* lex )
 			if( i+1 == t && lex[i] == '&' )
 			{
 				tiptok = 5;
+				i++;
 			}
 			else
 				i--;
@@ -196,6 +198,16 @@ int AnalizadorLexico( const char* lex )
 			tiptok = 10;
 			i++;
 			break;
+		case '(':
+		case ')':
+			tiptok = 11;
+			i++;
+			break;
+		case '{':
+		case '}':
+			tiptok = 12;
+			i++;
+			break;
 		default:
 			break;
 	}
@@ -211,7 +223,7 @@ int IdentificaTipo( const char* cad )
 	//2: Palabra Reservada
 	int c = 0;
 	if( tipo == 1 )
-		while( c < (2) )
+		while( c < 3 )
 		{
 			if( !(strcmp( cad, palres[c] ) ) )
 			{
@@ -243,6 +255,10 @@ int IdentificaTipo( const char* cad )
 			return 9;
 		case 10:
 			return 10;
+		case 11:
+			return 11;
+		case 12:
+			return 12;
 		default:
 			return -1;
 	}
@@ -261,6 +277,7 @@ int LeeArchivo(const char* arc)
 			{
 				//Crea una nueva cadena, que no contiene el ultimo caracter
 				char cadsinpyc[1000];
+				memset(cadsinpyc, 0, sizeof(cadsinpyc));
 				strncpy( cadsinpyc, cadena, strlen(cadena)-1 );
 				//Realiza dos analisis lexicos: uno para la cadena sin el ;, y otro para el ;
 				int tipo = IdentificaTipo(cadsinpyc);
@@ -273,7 +290,47 @@ int LeeArchivo(const char* arc)
 				}
 				tipo = IdentificaTipo(";");		
 				AgregaTablaSimbolos(";", tipo);
-			}else{	//Sino, simplemente somete la cadena entera al Analisis Lexico
+			} else if( strlen(cadena) > 1 && cadena[strlen(cadena) -1] == ',' ) {
+				//Crea una nueva cadena, que no contiene el ultimo caracter
+				char cadsinpyc[1000];
+				memset(cadsinpyc, 0, sizeof(cadsinpyc));
+				strncpy( cadsinpyc, cadena, strlen(cadena)-1 );
+				//Realiza dos analisis lexicos: uno para la cadena sin el ;, y otro para el ;
+				int tipo = IdentificaTipo(cadsinpyc);
+				if( tipo != -1 )		
+					AgregaTablaSimbolos(cadsinpyc, tipo);
+				else
+				{
+					printf("Error Lexico. No se reconoce: %s\n", cadsinpyc);
+					return -1;
+				}
+				tipo = IdentificaTipo(",");		
+				AgregaTablaSimbolos(",", tipo);
+			} else if( strlen(cadena) > 1 && ( cadena[strlen(cadena) -1] == '(' || cadena[strlen(cadena) -1] == ')' ) ) { //Sino, si la cadena que extrajo tiene mas de un caracter, y el ultimo es (
+				//Crea una nueva cadena, que no contiene el ultimo caracter
+				char cadsinpar[1000];
+				memset(cadsinpar, 0, sizeof(cadsinpar));
+				strncpy( cadsinpar, cadena, strlen(cadena)-1 );
+				//Realiza dos analisis lexicos: uno para la cadena sin el ;, y otro para el ;
+				int tipo = IdentificaTipo(cadsinpar);
+				if( tipo != -1 )		
+					AgregaTablaSimbolos(cadsinpar, tipo);
+				else
+				{
+					printf("Error Lexico. No se reconoce: %s\n", cadsinpar);
+					return -1;
+				}
+				if( cadena[ strlen(cadena)-1 ] == '(' )
+				{
+					tipo = IdentificaTipo( "(" );		
+					AgregaTablaSimbolos("(", tipo);
+				}
+				else
+				{
+					tipo = IdentificaTipo( ")" );		
+					AgregaTablaSimbolos(")", tipo);
+				}
+			} else {	//Sino, simplemente somete la cadena entera al Analisis Lexico
 				int tipo = IdentificaTipo(cadena);
 				if( tipo != -1 )		
 					AgregaTablaSimbolos(cadena, tipo);
@@ -586,6 +643,38 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 					break;
 			}
 			break;
+		case 11:
+			strcpy(NuevoTabla->tipotoken, "PAR");
+			switch( lex[0] )
+			{
+				case '(':
+					NuevoTabla->ind = 701;
+					strcpy(NuevoTabla->tipdat, "NULL");
+					strcpy(NuevoTabla->regla, "(S)");
+					break;
+				case ')':
+					NuevoTabla->ind = 702;
+					strcpy(NuevoTabla->tipdat, "NULL");
+					strcpy(NuevoTabla->regla, "(S)");
+					break;
+			}
+			break;
+		case 12:
+			strcpy(NuevoTabla->tipotoken, "LLA");
+			switch( lex[0] )
+			{
+				case '{':
+					NuevoTabla->ind = 801;
+					strcpy(NuevoTabla->tipdat, "NULL");
+					strcpy(NuevoTabla->regla, "{S}");
+					break;
+				case '}':
+					NuevoTabla->ind = 802;
+					strcpy(NuevoTabla->tipdat, "NULL");
+					strcpy(NuevoTabla->regla, "{S}");
+					break;
+			}
+			break;
 	}
 	
 	if( PTabla == NULL)
@@ -600,9 +689,9 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 	}		
 }
 
-int AnalizadorSintactico(void)
+int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 {
-	Aux = PTabla;
+	Aux = Ini;
 	push("G");
 	//Mientras haya simbolos por analizar
 	while( Aux != NULL )
@@ -641,7 +730,6 @@ int AnalizadorSintactico(void)
 							Aux = Aux->liga;
 							if ( Aux != NULL && !strcmp(Aux->lexema, ",") ){
 								strcpy(Aux->derivacion, "SEP");
-								push(" ");
 								push(",");
 								push(" ");
 								push("V");
@@ -653,6 +741,13 @@ int AnalizadorSintactico(void)
 								push(";");
 								ImprimeDerivacion();
 								Aux = Aux->liga;
+								if( Aux != NULL && !strcmp(Aux->lexema, "}") )
+								{
+									push("}");
+									ImprimeDerivacion();
+									Aux = Aux->liga;
+									return 0;
+								}
 							}else{ //Si el siguiente no es , o ; , es un error sintactico
 								printf("Error Sintactico: Se esperaba una , o un ;\n");
 								return -1;
@@ -664,6 +759,112 @@ int AnalizadorSintactico(void)
 					}
 				} else if( !strcmp(Aux->lexema, "while") ) {
 					//GRAMATICA DEL WHILE VA ACA
+					strcpy(Aux->derivacion, "while");
+					push("while");
+					push("(");
+					push("C");
+					push(")");
+					push("{");
+					push("G");
+					push("}");
+					ImprimeDerivacion();
+					pop();
+					pop();
+					pop();
+					pop();
+					Aux = Aux->liga;
+					if( !strcmp(Aux->lexema, "(") )
+					{
+						Aux = Aux->liga;
+						while( !strcmp(QPila->derivacion, "C") )
+						{
+							pop();
+							if( Aux != NULL )
+								if( Aux->liga != NULL )
+									if( Aux->liga->liga != NULL )
+									{
+										if( ( !strcmp( Aux->tipotoken, "ID" ) || !strcmp( Aux->tipotoken, "NE" ) || !strcmp( Aux->tipotoken, "ND" ) || !strcmp( Aux->tipotoken, "NX" ) ) && !strcmp( Aux->liga->tipotoken, "OR" ) && ( !strcmp( Aux->liga->liga->tipotoken, "ID" ) || !strcmp( Aux->liga->liga->tipotoken, "NE" ) || !strcmp( Aux->liga->liga->tipotoken, "ND" ) || !strcmp( Aux->liga->liga->tipotoken, "NX" ) ) )
+										{
+											push(Aux->tipotoken);
+											push(" ");
+											Aux = Aux->liga;
+											push(Aux->tipotoken);
+											push(" ");
+											Aux = Aux->liga;
+											push(Aux->tipotoken);
+											Aux = Aux->liga;
+										}
+										else
+										{
+											printf("Error Sintactico: Mas o menos por aqui Se esperaba una expresion condicional\n");
+											return -1;
+										}
+										
+										if( Aux != NULL && !strcmp( Aux->tipotoken, "OL" ) )
+										{
+											push(" ");
+											push("OL");
+											push(" ");
+											push("C");
+											push(")");
+											push("{");
+											push("G");
+											push("}");
+											ImprimeDerivacion();
+											pop();
+											pop();
+											pop();
+											pop();
+											pop();
+											pop();
+											if( !strcmp( Aux->lexema, "&&" ) || !strcmp( Aux->lexema, "||" ) )
+											{
+												pop();
+												push(Aux->lexema);
+												push(" ");
+												push("C");
+												push(")");
+												push("{");
+												push("G");
+												push("}");
+												ImprimeDerivacion();
+												pop();
+												pop();
+												pop();
+												pop();
+											}
+											Aux = Aux->liga;
+										} else if( Aux != NULL && !strcmp( Aux->lexema, ")" ) ) {
+											push(")");
+											push("{");
+											push("G");
+											push("}");
+											ImprimeDerivacion();
+											pop();
+											pop();
+											Aux = Aux->liga;
+										} else if( Aux == NULL ) {
+											printf("Error Sintactico. Se esperaba al menos un parentesis de cierre\n");
+											return -1;
+										}
+
+										if( !strcmp( QPila->derivacion, "{" ) )
+										{
+											//AHORA ANALIZA LAS INSTRUCCIONES DEL BLOQUE WHILE
+											AnalizadorSintactico(Aux->liga, numcopia+1);
+										} else if( !strcmp( QPila->derivacion, "C" ) ) {
+											continue;
+										}
+										else {
+											printf("Error Sintactico. Se esperaba una llave de apertura");
+											return -1;
+										}
+									}
+						}
+					} else {
+						printf("Error Sintactico. Se esperaba un parentesis de apertura");
+						return -1;
+					}
 				}
 			} else if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") ) { //Si empieza con ID 
 				strcpy(Aux->derivacion, "ID");
@@ -691,7 +892,7 @@ int AnalizadorSintactico(void)
 							else
 							{
 								strcpy(Aux->derivacion, "NUM");
-								push("num");
+								push(Aux->tipotoken);
 							}
 							Aux = Aux->liga;
 							if( Aux != NULL && !strcmp(Aux->lexema, ";") )
@@ -700,6 +901,13 @@ int AnalizadorSintactico(void)
 								Aux = Aux->liga;
 								push(";");
 								ImprimeDerivacion();
+								if( Aux != NULL && !strcmp(Aux->lexema, "}") )
+								{
+									push("}");
+									ImprimeDerivacion();
+									Aux = Aux->liga;
+									return 0;
+								}
 								break;
 							}else if( Aux != NULL && !strcmp(Aux->tipotoken, "OA") ){
 								strcpy( Aux->derivacion, "OA" );
@@ -716,16 +924,30 @@ int AnalizadorSintactico(void)
 						}
 					}
 				}
+			} else {
+				Aux = Aux->liga;
 			}
 		}
-		if( strcmp(QPila->derivacion, ";") )
+		if( Aux != NULL && !strcmp(Aux->lexema, "}") )
+		{
+			push("}");
+			ImprimeDerivacion();
+			Aux = Aux->liga;
+			return 0;
+		}
+
+		if( QPila != NULL && strcmp(QPila->derivacion, ";") && strcmp(QPila->derivacion, "}") )
 		{//Si el ultimo caracter no fue ; es error sintactico
-			printf("Error Sintactico: Se esperaba un ;\n");
+			printf("Error Sintactico: Se esperaba un ; o una llave de cierre\n");
 			return -1;
 		}
-		VaciaPila();
-		printf("\n");
-		push("G");
+		if( numcopia == 0 )
+		{
+			VaciaPila();
+			printf("\n");
+		}
+		if( Aux != NULL )
+				push("G");
 	}
 	return 0;
 }
