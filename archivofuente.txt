@@ -1,16 +1,21 @@
-int a, b;
-int y;
+int a, b, y, c, w, u;
+int xy, d, f, h, i, j, k, o, p, q;
+
 y = 5;
 a = 3 * y + 5;
-while( a == 3 && b == c )
+
+while( ( a == 3 && ( 5 == 8 ) ) && 4 <= 9 || ( ( b == c ) || 7 == 0 ) )
 {
     y = 8;
     a = 4;
-    while( 5 == 7 )
+
+    while( ( 5 == 7 ) || a != c )
     {
         w = 5 * u;
     }
+
     xy = 57;
     d = 8.2;
 }
+
 f = 3;
