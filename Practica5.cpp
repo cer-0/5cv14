@@ -1093,8 +1093,6 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 					}
 				}
 			} else {
-				printf("La derivacion intenta derivar: %s\n", Aux->lexema);
-				printf("No te la manejo\n");
 				Aux = Aux->liga;
 			}
 		}
