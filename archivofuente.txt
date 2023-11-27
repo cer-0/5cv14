@@ -1,4 +1,4 @@
-int a;
+int a, b;
 int y;
 y = 5;
 a = 3 * y + 5;

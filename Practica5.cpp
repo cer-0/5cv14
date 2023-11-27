@@ -290,6 +290,22 @@ int LeeArchivo(const char* arc)
 				}
 				tipo = IdentificaTipo(";");		
 				AgregaTablaSimbolos(";", tipo);
+			} else if( strlen(cadena) > 1 && cadena[strlen(cadena) -1] == ',' ) {
+				//Crea una nueva cadena, que no contiene el ultimo caracter
+				char cadsinpyc[1000];
+				memset(cadsinpyc, 0, sizeof(cadsinpyc));
+				strncpy( cadsinpyc, cadena, strlen(cadena)-1 );
+				//Realiza dos analisis lexicos: uno para la cadena sin el ;, y otro para el ;
+				int tipo = IdentificaTipo(cadsinpyc);
+				if( tipo != -1 )		
+					AgregaTablaSimbolos(cadsinpyc, tipo);
+				else
+				{
+					printf("Error Lexico. No se reconoce: %s\n", cadsinpyc);
+					return -1;
+				}
+				tipo = IdentificaTipo(",");		
+				AgregaTablaSimbolos(",", tipo);
 			} else if( strlen(cadena) > 1 && ( cadena[strlen(cadena) -1] == '(' || cadena[strlen(cadena) -1] == ')' ) ) { //Sino, si la cadena que extrajo tiene mas de un caracter, y el ultimo es (
 				//Crea una nueva cadena, que no contiene el ultimo caracter
 				char cadsinpar[1000];
@@ -714,7 +730,6 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 							Aux = Aux->liga;
 							if ( Aux != NULL && !strcmp(Aux->lexema, ",") ){
 								strcpy(Aux->derivacion, "SEP");
-								push(" ");
 								push(",");
 								push(" ");
 								push("V");
