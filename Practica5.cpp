@@ -272,16 +272,13 @@ int LeeArchivo(const char* arc)
 	{
 		while( fscanf(Archivo,"%s",cadena) != EOF )
 		{
-			printf("La cadena que extraje es: %s\n", cadena);
 			//Si la cadena que extrajo tiene mas de un caracter, y el ultimo es ;
 			if( strlen(cadena) > 1 && cadena[strlen(cadena) -1] == ';' )
 			{
 				//Crea una nueva cadena, que no contiene el ultimo caracter
 				char cadsinpyc[1000];
 				memset(cadsinpyc, 0, sizeof(cadsinpyc));
-				printf("cadsinpyc vale, antes: %s", cadsinpyc);
 				strncpy( cadsinpyc, cadena, strlen(cadena)-1 );
-				printf("CadSinPyC vale: %s", cadsinpyc);
 				//Realiza dos analisis lexicos: uno para la cadena sin el ;, y otro para el ;
 				int tipo = IdentificaTipo(cadsinpyc);
 				if( tipo != -1 )		
