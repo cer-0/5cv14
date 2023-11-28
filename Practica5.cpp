@@ -44,6 +44,8 @@ char *palres[] = {"int", "float", "while"};
 
 int indID=0,indNE=201,indND=301,indNX=401;
 
+	int contadorllaves = 0;
+
 void ImprimeTabla()
 {
 	Aux = PTabla;
@@ -743,6 +745,12 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 								Aux = Aux->liga;
 								if( Aux != NULL && !strcmp(Aux->lexema, "}") )
 								{
+									contadorllaves--;
+									if( contadorllaves < 0 )
+									{
+										printf("Error Sintactico: Hay mas llaves de cierre que de apertura\n");
+										return -1;
+									}
 									push("}");
 									ImprimeDerivacion();
 									Aux = Aux->liga;
@@ -759,6 +767,7 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 					}
 				} else if( !strcmp(Aux->lexema, "while") ) {
 					//GRAMATICA DEL WHILE VA ACA
+					int numpar = 0;		//Cuenta el numero de pares de parentesis dentro de la condicion (incluyendo los principales)
 					strcpy(Aux->derivacion, "while");
 					push("while");
 					push("(");
@@ -768,105 +777,279 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 					push("G");
 					push("}");
 					ImprimeDerivacion();
-					pop();
-					pop();
-					pop();
-					pop();
+					while( strcmp(QPila->derivacion, "C") )
+						pop();
 					Aux = Aux->liga;
 					if( !strcmp(Aux->lexema, "(") )
 					{
+						numpar++;
 						Aux = Aux->liga;
+						//Mientras tenga que analizar una expresion condicional
 						while( !strcmp(QPila->derivacion, "C") )
 						{
 							pop();
-							if( Aux != NULL )
-								if( Aux->liga != NULL )
-									if( Aux->liga->liga != NULL )
-									{
-										if( ( !strcmp( Aux->tipotoken, "ID" ) || !strcmp( Aux->tipotoken, "NE" ) || !strcmp( Aux->tipotoken, "ND" ) || !strcmp( Aux->tipotoken, "NX" ) ) && !strcmp( Aux->liga->tipotoken, "OR" ) && ( !strcmp( Aux->liga->liga->tipotoken, "ID" ) || !strcmp( Aux->liga->liga->tipotoken, "NE" ) || !strcmp( Aux->liga->liga->tipotoken, "ND" ) || !strcmp( Aux->liga->liga->tipotoken, "NX" ) ) )
+							if( !strcmp(Aux->lexema, "(") )
+							{
+								numpar++;
+								push("(");
+								push("C");
+								for( int it=0; it<numpar; it++ )
+									push(")");
+								push("{");
+								push("G");
+								push("}");
+								ImprimeDerivacion();
+								while( strcmp(QPila->derivacion, "C") )
+									pop();
+								Aux = Aux->liga;
+							}
+							else if( Aux != NULL )
+									if( Aux->liga != NULL )
+										if( Aux->liga->liga != NULL )
 										{
-											push(Aux->tipotoken);
-											push(" ");
-											Aux = Aux->liga;
-											push(Aux->tipotoken);
-											push(" ");
-											Aux = Aux->liga;
-											push(Aux->tipotoken);
-											Aux = Aux->liga;
-										}
-										else
-										{
-											printf("Error Sintactico: Mas o menos por aqui Se esperaba una expresion condicional\n");
-											return -1;
-										}
-										
-										if( Aux != NULL && !strcmp( Aux->tipotoken, "OL" ) )
-										{
-											push(" ");
-											push("OL");
-											push(" ");
-											push("C");
-											push(")");
-											push("{");
-											push("G");
-											push("}");
-											ImprimeDerivacion();
-											pop();
-											pop();
-											pop();
-											pop();
-											pop();
-											pop();
-											if( !strcmp( Aux->lexema, "&&" ) || !strcmp( Aux->lexema, "||" ) )
+											if( ( !strcmp( Aux->tipotoken, "ID" ) || !strcmp( Aux->tipotoken, "NE" ) || !strcmp( Aux->tipotoken, "ND" ) || !strcmp( Aux->tipotoken, "NX" ) ) && !strcmp( Aux->liga->tipotoken, "OR" ) && ( !strcmp( Aux->liga->liga->tipotoken, "ID" ) || !strcmp( Aux->liga->liga->tipotoken, "NE" ) || !strcmp( Aux->liga->liga->tipotoken, "ND" ) || !strcmp( Aux->liga->liga->tipotoken, "NX" ) ) )
 											{
-												pop();
-												push(Aux->lexema);
-												push(" ");
-												push("C");
-												push(")");
+												push("CR");
+												for( int it=0; it<numpar; it++ )
+													push(")");
 												push("{");
 												push("G");
 												push("}");
 												ImprimeDerivacion();
-												pop();
-												pop();
-												pop();
-												pop();
+												while( strcmp( QPila->derivacion, "CR" ) )
+													pop();
+												//Si despues, de la expresion condicional, aparece un operador logico
+												if( Aux->liga->liga->liga != NULL && !strcmp( Aux->liga->liga->liga->tipotoken, "OL" ) )
+												{
+													//Se indica que C deriva en esta gramatica
+													push(" ");
+													push("OL");
+													push(" ");
+													push("C");
+													for( int it=0; it<numpar; it++ )
+														push(")");
+													push("{");
+													push("G");
+													push("}");
+													ImprimeDerivacion();
+													while( strcmp( QPila->derivacion, "CR" ) )
+														pop();
+													pop();
+													//Se deriva CR => (ID|NUM) OR (ID|NUM)
+													push(Aux->tipotoken);
+													push(" ");
+													push("OR");
+													push(" ");
+													push(Aux->liga->liga->tipotoken);
+													push(" ");
+													push("OL");
+													push(" ");
+													push("C");
+													for( int it=0; it<numpar; it++ )
+														push(")");
+													push("{");
+													push("G");
+													push("}");
+													ImprimeDerivacion();
+													while( strcmp( QPila->derivacion, "OR" ) )
+														pop();
+													pop();
+													//Se deriva OR => && | ||
+													Aux = Aux->liga;
+													push(Aux->lexema);
+													push(" ");
+													push(Aux->liga->tipotoken);
+													push(" ");
+													push("OL");
+													push(" ");
+													push("C");
+													for( int it=0; it<numpar; it++ )
+														push(")");
+													push("{");
+													push("G");
+													push("}");
+													ImprimeDerivacion();
+													while( strcmp( QPila->derivacion, "OL" ) )
+														pop();
+													pop();
+													Aux = Aux->liga;
+													Aux = Aux->liga;
+													//Se deriva OL
+													if( !strcmp( Aux->lexema, "&&" ) || !strcmp( Aux->lexema, "||" ) )
+													{
+														pop();
+														push(" ");
+														push(Aux->lexema);
+														push(" ");
+														push("C");
+														for( int it=0; it<numpar; it++ )
+															push(")");
+														push("{");
+														push("G");
+														push("}");
+														ImprimeDerivacion();
+														while( strcmp(QPila->derivacion, "C") )
+															pop();
+													} else {
+														printf("Error Sintactico. Se esperaba un operador logico");
+														return -1;
+													}
+													Aux = Aux->liga;
+												} else if( Aux->liga->liga->liga != NULL && !strcmp( Aux->liga->liga->liga->lexema, ")" ) ) {
+													TSimbolos *Act = Aux->liga->liga->liga;
+													numpar--;
+													int totpar = 1;
+													Act = Act->liga;
+													while( !strcmp(Act->lexema, ")") )
+													{
+														numpar--;
+														totpar++;
+														Act = Act->liga;
+													}
+													if( numpar > 0 )
+													{
+														//Si no son los parentesis principales, se espera un operador logico
+														//Se deriva CR => (ID|NUM) OR (ID|NUM)
+														pop();
+														push(Aux->tipotoken);
+														push(" ");
+														push("OR");
+														push(" ");
+														push(Aux->liga->liga->tipotoken);
+														for( int it=0; it<totpar; it++ )
+															push(")");
+														push(" ");
+														push("OL");
+														push(" ");
+														push("C");
+														push(")");
+														push("{");
+														push("G");
+														push("}");
+														ImprimeDerivacion();
+														while( strcmp( QPila->derivacion, "OR" ) )
+															pop();
+														pop();
+														//Se deriva OR => && | ||
+														Aux = Aux->liga;
+														push(Aux->lexema);
+														push(" ");
+														push(Aux->liga->tipotoken);
+														for( int it=0; it<totpar; it++ )
+															push(")");
+														push(" ");
+														push("OL");
+														push(" ");
+														push("C");
+														push(")");
+														push("{");
+														push("G");
+														push("}");
+														ImprimeDerivacion();
+														while( strcmp(QPila->derivacion, "OL") )
+															pop();
+														Aux = Aux->liga;
+														Aux = Aux->liga;
+														while( !strcmp(Aux->lexema, ")") )
+															Aux = Aux->liga;
+														//Se deriva OL
+														if( !strcmp( Aux->lexema, "&&" ) || !strcmp( Aux->lexema, "||" ) )
+														{
+															pop();
+															push(Aux->lexema);
+															push(" ");
+															push("C");
+															for( int it=0; it<totpar; it++ )
+																push(")");
+															push("{");
+															push("G");
+															push("}");
+															ImprimeDerivacion();
+															while( strcmp(QPila->derivacion, "C") )
+																pop();
+															Aux = Aux->liga;
+														} else {
+															printf("Error Sintactico. Se esperaba un operador logico\n");
+															return -1;
+														}
+													} else if( numpar == 0 )
+													{
+														pop();
+														//Si son los parentesis principales, se deriva la expresion, se termina la comdicion del while
+														//Se deriva CR => (ID|NUM) OR (ID|NUM)
+														push(Aux->tipotoken);
+														push(" ");
+														push("OR");
+														push(" ");
+														push(Aux->liga->liga->tipotoken);
+														for( int it=0; it<totpar; it++ )
+															push(")");
+														push("{");
+														push("G");
+														push("}");
+														ImprimeDerivacion();
+														while( strcmp( QPila->derivacion, "OR" ) )
+															pop();
+														pop();
+														//Se deriva OR => && | ||
+														Aux = Aux->liga;
+														push(Aux->lexema);
+														push(" ");
+														push(Aux->liga->tipotoken);
+														for( int it=0; it<totpar; it++ )
+															push(")");
+														push("{");
+														push("G");
+														push("}");
+														ImprimeDerivacion();
+														while( strcmp( QPila->derivacion, "{" ) )
+															pop();
+														while( Aux != NULL && strcmp( Aux->lexema, "{" ) )
+															Aux = Aux->liga;
+														if( Aux != NULL && !strcmp( Aux->lexema, "{" ) )
+															contadorllaves++;
+														else
+														{
+															printf("Error Sintactico: Se esperabaw una llave de apertura");
+															return -1;
+														}
+													} else {
+														printf( "Error Sintactico. Existen mas parentesis de cierre que de apertura\n" );
+														return -1;
+													}
+												} else {
+													printf("Error Sintactico: Se esperaba un parentesis de cierre o una expresion logica\n");
+													return -1;
+												}
+											} else {
+												printf("Error Sintactico. Se esperaba una expresion condicional");
+												return -1;					
 											}
-											Aux = Aux->liga;
-										} else if( Aux != NULL && !strcmp( Aux->lexema, ")" ) ) {
-											push(")");
-											push("{");
-											push("G");
-											push("}");
-											ImprimeDerivacion();
-											pop();
-											pop();
-											Aux = Aux->liga;
-										} else if( Aux == NULL ) {
-											printf("Error Sintactico. Se esperaba al menos un parentesis de cierre\n");
+										} else {
+											printf("Error. Se esperaba una expresion condicional\n");
 											return -1;
 										}
-
-										if( !strcmp( QPila->derivacion, "{" ) )
-										{
-											//AHORA ANALIZA LAS INSTRUCCIONES DEL BLOQUE WHILE
-											AnalizadorSintactico(Aux->liga, numcopia+1);
-										} else if( !strcmp( QPila->derivacion, "C" ) ) {
-											continue;
-										}
-										else {
-											printf("Error Sintactico. Se esperaba una llave de apertura");
-											return -1;
-										}
-									}
 						}
+						
+						if( numpar == 0 && !strcmp( QPila->derivacion, "{" ) )
+						{
+							//AHORA ANALIZA LAS INSTRUCCIONES DEL BLOQUE WHILE
+							AnalizadorSintactico(Aux->liga, numcopia+1);
+						} else if( numpar != 0 ) {
+							printf("Error. No existe la misma cantidad de parentesis de apertura que de cierre");
+							return -1;
+						}
+						 else if( strcmp( QPila->derivacion, "{" ) ) {
+							printf("Error Sintactico. Se esperaba una llave de apertura");
+							return -1;
+						}
+
 					} else {
-						printf("Error Sintactico. Se esperaba un parentesis de apertura");
+						printf("Error Sintactico. Se esperaba un paréntesis de apertura");
 						return -1;
 					}
 				}
-			} else if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") ) { //Si empieza con ID 
+			} else if( Aux != NULL && !strcmp(Aux->tipotoken, "ID") ) { //Si empieza con ID
 				strcpy(Aux->derivacion, "ID");
 				push("ID");
 				Aux = Aux->liga;
@@ -903,6 +1086,13 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 								ImprimeDerivacion();
 								if( Aux != NULL && !strcmp(Aux->lexema, "}") )
 								{
+									printf("ENTRO AQUI\n");
+									contadorllaves--;
+									if( contadorllaves < 0 )
+									{
+										printf("Error Sintactico: Hay mas llaves de cierre que de apertura\n");
+										return -1;
+									}
 									push("}");
 									ImprimeDerivacion();
 									Aux = Aux->liga;
@@ -948,6 +1138,10 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 		}
 		if( Aux != NULL )
 				push("G");
+	}
+	if( numcopia == 0 && contadorllaves != 0 )
+	{
+		printf( "Error Sintactico: La cantidad de llaves de apertura no es la misma que las de cierre\n" );
 	}
 	return 0;
 }

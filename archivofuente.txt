@@ -1,16 +1,7 @@
-int a, b;
-int y;
-y = 5;
-a = 3 * y + 5;
-while( a == 3 && b == c )
+int a, b, c;
+
+while( a == 5 )
 {
-    y = 8;
-    a = 4;
-    while( 5 == 7 )
-    {
-        w = 5 * u;
-    }
-    xy = 57;
-    d = 8.2;
+        y = 8;
+        a = 4;
 }
-f = 3;
