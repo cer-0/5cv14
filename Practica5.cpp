@@ -44,6 +44,8 @@ char *palres[] = {"int", "float", "while"};
 
 int indID=0,indNE=201,indND=301,indNX=401;
 
+	int contadorllaves = 0;
+
 void ImprimeTabla()
 {
 	Aux = PTabla;
@@ -743,6 +745,12 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 								Aux = Aux->liga;
 								if( Aux != NULL && !strcmp(Aux->lexema, "}") )
 								{
+									contadorllaves--;
+									if( contadorllaves < 0 )
+									{
+										printf("Error Sintactico: Hay mas llaves de cierre que de apertura\n");
+										return -1;
+									}
 									push("}");
 									ImprimeDerivacion();
 									Aux = Aux->liga;
@@ -996,8 +1004,15 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 														ImprimeDerivacion();
 														while( strcmp( QPila->derivacion, "{" ) )
 															pop();
-														while( strcmp( Aux->lexema, "{" ) )
+														while( Aux != NULL && strcmp( Aux->lexema, "{" ) )
 															Aux = Aux->liga;
+														if( Aux != NULL && !strcmp( Aux->lexema, "{" ) )
+															contadorllaves++;
+														else
+														{
+															printf("Error Sintactico: Se esperabaw una llave de apertura");
+															return -1;
+														}
 													} else {
 														printf( "Error Sintactico. Existen mas parentesis de cierre que de apertura\n" );
 														return -1;
@@ -1071,6 +1086,13 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 								ImprimeDerivacion();
 								if( Aux != NULL && !strcmp(Aux->lexema, "}") )
 								{
+									printf("ENTRO AQUI\n");
+									contadorllaves--;
+									if( contadorllaves < 0 )
+									{
+										printf("Error Sintactico: Hay mas llaves de cierre que de apertura\n");
+										return -1;
+									}
 									push("}");
 									ImprimeDerivacion();
 									Aux = Aux->liga;
@@ -1116,6 +1138,10 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 		}
 		if( Aux != NULL )
 				push("G");
+	}
+	if( numcopia == 0 && contadorllaves != 0 )
+	{
+		printf( "Error Sintactico: La cantidad de llaves de apertura no es la misma que las de cierre\n" );
 	}
 	return 0;
 }
