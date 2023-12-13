@@ -1,4 +1,4 @@
-# 5CV24 - Práctica Compiladores
+# 5CV14 - Práctica Compiladores
 
 Repositorio que almacena código de la materia de compiladores
 
