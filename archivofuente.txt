@@ -1,7 +1,9 @@
 int a, b, c;
+a = 8;
+b = 7;
+c = 9;
 
-while( a == 5 )
+while(a == 5)
 {
-        y = 8;
-        a = 4;
+    a = 4;
 }
