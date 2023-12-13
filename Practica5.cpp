@@ -11,16 +11,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include "Bibliotecas/TSimbolos.h"
-#include "Bibliotecas/Pila.h"
-#include "Bibliotecas/AnalizadorLexico.h"
-#include "Bibliotecas/AnalizadorSintactico.h"
-#include "Bibliotecas/AnalizadorSemantico.h"
-#include "Bibliotecas/EscribeEnsamblador.h"
-#include "Bibliotecas/AgregaTablaSimbolos.h"
-#include "Bibliotecas/ImprimeTabla.h"
-#include "Bibliotecas/LeeArchivo.h"
-
+#include "Compilador.h"
 
 int main(void)	
 {
@@ -31,10 +22,10 @@ int main(void)
 	//En lugar de ingresar una cadena, se leen del archivo
 	if( !LeeArchivo(archivo) )
 	{
-		ImprimeTabla();
 		if( !AnalizadorSintactico(PTabla, 0) )
 		{
 			ImprimeTabla();
+			AnalizadorSemantico(PTabla, 0);
 			/*
 			if( !AnalizadorSemantico(PTabla, 0) )
 				EscribeEnsamblador(programa);
