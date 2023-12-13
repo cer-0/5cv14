@@ -35,36 +35,26 @@ int AnalizadorLexico( const char* lex )
 			else
 				tiptok = 3;
 			i++;
-			if( i+1 == t )
+			if( i < t && lex[i] == '=' )
 			{
-				if( lex[i] == '=' )
-					tiptok = 3;
-				else
-					i--;
+				tiptok = 3;
 				i++;
 			}
-			else if( i == t )
-				break;
-			else if( i < t)
-				i--;
 			break;
 		case '*':
 		case '/':
+			tiptok = 6;
 			i++;
-			if(i == t )
-				tiptok = 6;
-			else
-				i--;
 			break;
 		case '&':
 			i++;
-			if( i+1 == t && lex[i] == '&' )
+			if( i < t && lex[i] == '&' )
 			{
 				tiptok = 5;
 				i++;
 			}
 			else
-				i--;
+				tiptok = 0;
 			break;
 		case '|':
 			i++;
@@ -74,7 +64,7 @@ int AnalizadorLexico( const char* lex )
 				i++;
 			}
 			else
-				i--;
+				tiptok = 0;
 			break;
 		case '0'...'9':
 		case '+':
@@ -100,7 +90,7 @@ int AnalizadorLexico( const char* lex )
 							i++;
 					}
 					else
-						i--;
+						return 0;
 				}
 				if( i < t && lex[i] == 'e' || lex[i] == 'E' )
 				{
@@ -114,7 +104,7 @@ int AnalizadorLexico( const char* lex )
 							i++;
 					}
 					else
-						i--;
+						return 0;
 				}
 			}
 			break;	
