@@ -24,6 +24,10 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 				NuevoTabla->ind = 518;
 				strcpy(NuevoTabla->tipdat, "float");
 				strcpy(NuevoTabla->regla, "float ID");
+			}else if( !strcmp( lex, "while" ) ){
+				NuevoTabla->ind = 519;
+				strcpy(NuevoTabla->tipdat, "NULL");
+				strcpy(NuevoTabla->regla, "while(C){S}");
 			}
 			break;
 		case 3:

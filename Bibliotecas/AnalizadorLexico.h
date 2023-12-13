@@ -1,5 +1,5 @@
 /* Contiene AnalizadorLexico() e IdentificaTipo() */
-char *palres[] = {"int", "float", "while"};
+const char *palres[] = {"int", "float", "while"};
 int i;
 
 //1: ID
@@ -132,13 +132,16 @@ int AnalizadorLexico( const char* lex )
 int IdentificaTipo( const char* cad )
 {
 	int tipo = AnalizadorLexico( cad );
-	
+	char seAgrega[1000];
+	memset(seAgrega, 0, sizeof(seAgrega));
+	strncpy(seAgrega, cad, i);
+
 	//2: Palabra Reservada
 	int c = 0;
 	if( tipo == 1 )
 		while( c < 3 )
 		{
-			if( !(strcmp( cad, palres[c] ) ) )
+			if( !strcmp( seAgrega, palres[c] ) )
 			{
 				tipo = 2;
 				break;

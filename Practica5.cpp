@@ -32,12 +32,14 @@ int main(void)
 	if( !LeeArchivo(archivo) )
 	{
 		ImprimeTabla();
-		/*
-		ImprimeTabla();
 		if( !AnalizadorSintactico(PTabla, 0) )
-			if( !AnalizadorSintactico(PTabla, 0) )
+		{
+			ImprimeTabla();
+			/*
+			if( !AnalizadorSemantico(PTabla, 0) )
 				EscribeEnsamblador(programa);
-		*/
+			*/
+		}
 	}
 	printf("Presione una tecla para continuar...");
 	getchar();
