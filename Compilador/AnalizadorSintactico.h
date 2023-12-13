@@ -132,33 +132,39 @@ int AnalizadorSintactico( TSimbolos *Ini, int numcopia )
 										{
 											if( ( !strcmp( AuxTabla->tipotoken, "ID" ) || !strcmp( AuxTabla->tipotoken, "NE" ) || !strcmp( AuxTabla->tipotoken, "ND" ) || !strcmp( AuxTabla->tipotoken, "NX" ) ) && !strcmp( AuxTabla->liga->tipotoken, "OR" ) && ( !strcmp( AuxTabla->liga->liga->tipotoken, "ID" ) || !strcmp( AuxTabla->liga->liga->tipotoken, "NE" ) || !strcmp( AuxTabla->liga->liga->tipotoken, "ND" ) || !strcmp( AuxTabla->liga->liga->tipotoken, "NX" ) ) )
 											{
-												//Localiza la declaracion de la variable e identifica su tipo
-												//Si no la encuentra, se muestra un error sintactico
-												TSimbolos *Aux2 = PTabla;
-												while( Aux2 != AuxTabla && (strcmp( Aux2->tipotoken, "ID" ) || strcmp( Aux2->lexema, AuxTabla->lexema )) )
-													Aux2 = Aux2->liga;
-												if( Aux2 == AuxTabla )
+												if( !strcmp( AuxTabla->tipotoken, "ID" ) )
 												{
-													printf("Error Sintactico. La variable %s no esta declarada.\n", AuxTabla->lexema);
-													return -1;
+													//Localiza la declaracion de la variable e identifica su tipo
+													//Si no la encuentra, se muestra un error sintactico
+													TSimbolos *Aux2 = PTabla;
+													while( Aux2 != AuxTabla && (strcmp( Aux2->tipotoken, "ID" ) || strcmp( Aux2->lexema, AuxTabla->lexema )) )
+														Aux2 = Aux2->liga;
+													if( Aux2 == AuxTabla )
+													{
+														printf("Error Sintactico. La variable %s no esta declarada.\n", AuxTabla->lexema);
+														return -1;
+													}
+													else
+													{
+														strcpy( AuxTabla->tipdat, Aux2->tipdat );
+													}
 												}
-												else
+												if( !strcmp( AuxTabla->liga->liga->tipotoken, "ID" ) )
 												{
-													strcpy( AuxTabla->tipdat, Aux2->tipdat );
-												}
-												//Localiza la declaracion de la variable e identifica su tipo
-												//Si no la encuentra, se muestra un error sintactico
-												Aux2 = PTabla;
-												while( Aux2 != AuxTabla->liga->liga && (strcmp( Aux2->tipotoken, "ID" ) || strcmp( Aux2->lexema, AuxTabla->liga->liga->lexema )) )
-													Aux2 = Aux2->liga;
-												if( Aux2 == AuxTabla->liga->liga )
-												{
-													printf("Error Sintactico. La variable %s no esta declarada.\n", AuxTabla->lexema);
-													return -1;
-												}
-												else
-												{
-													strcpy( AuxTabla->liga->liga->tipdat, Aux2->tipdat );
+													//Localiza la declaracion de la variable e identifica su tipo
+													//Si no la encuentra, se muestra un error sintactico
+													TSimbolos *Aux2 = PTabla;
+													while( Aux2 != AuxTabla->liga->liga && (strcmp( Aux2->tipotoken, "ID" ) || strcmp( Aux2->lexema, AuxTabla->liga->liga->lexema )) )
+														Aux2 = Aux2->liga;
+													if( Aux2 == AuxTabla->liga->liga )
+													{
+														printf("Error Sintactico. La variable %s no esta declarada.\n", AuxTabla->lexema);
+														return -1;
+													}
+													else
+													{
+														strcpy( AuxTabla->liga->liga->tipdat, Aux2->tipdat );
+													}
 												}
 
 												push("CR");
