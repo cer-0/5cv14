@@ -22,12 +22,18 @@ void EscribeEnsamblador(const char* arc)
 				//Si la palabra reservada es un tipo de dato, procesa una declaracion
 				if( !strcmp( AuxTabla->lexema, "int" ) || !strcmp( AuxTabla->lexema, "float" ) )
 				{
-					//Salta al identificador
+					//Salta al primer identificador
 					AuxTabla = AuxTabla->liga;
-					//Si se encuentra un identificador
-					if( !strcmp( AuxTabla->tipotoken, "ID" ) )
+					while ( AuxTabla != NULL && !strcmp(AuxTabla->tipotoken, "ID") ) {
 						fprintf(Archivo, "\t%s DW ?\n", AuxTabla->lexema);
-					//Salta al punto y coma
+						if( AuxTabla->liga != NULL && !strcmp(AuxTabla->liga->lexema, ",") )
+						{
+							AuxTabla = AuxTabla->liga;
+							AuxTabla = AuxTabla->liga;
+						}
+						else
+							break;
+					}
 					AuxTabla = AuxTabla->liga;
 				}
 			} else if( !strcmp( AuxTabla->tipotoken, "ID" ) ) {	//Si no, si se encuentra un identificador, es una asignacion
