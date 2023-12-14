@@ -9,7 +9,8 @@ void AgregaTablaSimbolos(const char* lex, int tiptok)
 	{
 		case 1:
 			strcpy(NuevoTabla->tipotoken, "ID");
-			strcpy( NuevoTabla->tipdat, QTabla->lexema );
+			if( QTabla != NULL )
+				strcpy( NuevoTabla->tipdat, QTabla->lexema );
 			strcpy( NuevoTabla->regla, "D(D|A)*" );
 			NuevoTabla->ind = indID;
 			indID++;
