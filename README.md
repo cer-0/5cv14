@@ -6,6 +6,8 @@ Repositorio que almacena el proyecto final de la materia de compiladores
 
 Las siguientes son las gramáticas definidas en el compilador.
 
+### Gramáticas del análisis sintáctico
+
 Gramática de asignación:
 ```txt
 S -> int V | float V ;
@@ -24,10 +26,22 @@ Gramática de while:
 S -> while ( C ) { sentencia } | while ( C ) { S } |
      while ( C ) { S sentencias } | while ( C ) { sentencias S sentencias }
     
-C  -> CR OL C | CR
+C  -> (C) | CR OL C | CR
 CR -> id OR id | id OR num | num OR id
 OL -> && | || 
 OR -> < | > | <= | >= | == | !=
+```
+
+### Gramáticas del análisis semántico
+
+```txt
+T_INT => int
+INT_OP => ADD | SUB | MUL
+
+T_FLOAT => float
+FLOAT_OP => ADD | SUB | MUL | DIV
+
+G => T_INT = T_INT INT_OP T_INT | T_FLOAT = (T_INT | T_FLOAT) FLOAT_OP (T_INT | T_FLOAT)
 ```
 
 ## Ayuda
