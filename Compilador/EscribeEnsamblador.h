@@ -22,12 +22,18 @@ void EscribeEnsamblador(const char* arc)
 				//Si la palabra reservada es un tipo de dato, procesa una declaracion
 				if( !strcmp( AuxTabla->lexema, "int" ) || !strcmp( AuxTabla->lexema, "float" ) )
 				{
-					//Salta al identificador
+					//Salta al primer identificador
 					AuxTabla = AuxTabla->liga;
-					//Si se encuentra un identificador
-					if( !strcmp( AuxTabla->tipotoken, "ID" ) )
+					while ( AuxTabla != NULL && !strcmp(AuxTabla->tipotoken, "ID") ) {
 						fprintf(Archivo, "\t%s DW ?\n", AuxTabla->lexema);
-					//Salta al punto y coma
+						if( AuxTabla->liga != NULL && !strcmp(AuxTabla->liga->lexema, ",") )
+						{
+							AuxTabla = AuxTabla->liga;
+							AuxTabla = AuxTabla->liga;
+						}
+						else
+							break;
+					}
 					AuxTabla = AuxTabla->liga;
 				}
 			} else if( !strcmp( AuxTabla->tipotoken, "ID" ) ) {	//Si no, si se encuentra un identificador, es una asignacion
@@ -77,19 +83,20 @@ void EscribeEnsamblador(const char* arc)
 		{
 			if( !strcmp( AuxTabla->tipotoken, "ID" ) ) {	//Si se encuentra un identificador, es una asignacion
 				//Se recuerda la variable a la que se le va a asignar un valor
-				char asig[100];
+				char asig[1000];
 				strcpy( asig, AuxTabla->lexema );
 				int numtemp = -1; //Esta variable cuenta los temporales que se van utilizando
 				//Salta a la asignacion
 				AuxTabla = AuxTabla->liga;
 				//Si el siguiente no es una asignacion, termina el programa
-				if( strcmp( AuxTabla->tipotoken, "AS" ) )
+				if( AuxTabla != NULL && strcmp( AuxTabla->tipotoken, "AS" ) )
 					return;
 				//Salta al primer ID o NUM
 				AuxTabla = AuxTabla->liga;
 				//Se recuerda el primer valor que aparece despues del signo =, por si solo existe ese en la instruccion
 				char prim[100];
-				strcpy( prim, AuxTabla->lexema );
+				if( AuxTabla != NULL )
+					strcpy( prim, AuxTabla->lexema );
 				while( strcmp( AuxTabla->derivacion, "SEP" ) )	//Mientras queden tokens por analizar
 				{
 					//Si los tokens siguientes, incluyendo el actual, tienen juntos la estructura:
@@ -166,7 +173,7 @@ void EscribeEnsamblador(const char* arc)
 			}
 			else
 			{
-				while( AuxTabla != NULL && strcmp( AuxTabla->tipotoken, "SEP" ) )
+				while( AuxTabla != NULL && strcmp( AuxTabla->lexema, ";" ) )
 					AuxTabla = AuxTabla->liga;
 			}
 			//Avanza a la siguiente instruccion

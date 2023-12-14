@@ -25,11 +25,8 @@ int main(void)
 		if( !AnalizadorSintactico(PTabla, 0) )
 		{
 			ImprimeTabla();
-			AnalizadorSemantico(PTabla, 0);
-			/*
 			if( !AnalizadorSemantico(PTabla, 0) )
 				EscribeEnsamblador(programa);
-			*/
 		}
 	}
 	printf("Presione una tecla para continuar...");
