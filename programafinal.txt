@@ -20,3 +20,36 @@ begin:
 	mov ax, @data
 	mov ds, ax
 
+	mov ax, 10
+	mov T0, ax
+	mov ax, T0
+	mov b, ax
+
+	mov ax, 5
+	add ax, 1
+	mov T0, ax
+
+	mov ax, T0
+	mov T1, ax
+	mov ax, T1
+	mov d, ax
+
+	mov ax, 3
+	mov bx, b
+	mul bx
+	mov T0, ax
+
+	mov ax, T0
+	add ax, 5
+	mov T1, ax
+
+	mov ax, T1
+	sub ax, d
+	mov T2, ax
+
+	mov ax, T2
+	mov T3, ax
+	mov ax, T3
+	mov a, ax
+
+	END begin
