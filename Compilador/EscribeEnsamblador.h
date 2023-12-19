@@ -1,3 +1,118 @@
+
+#include <map>
+#include <string>
+
+
+
+using namespace std;
+
+map<string, int> precedencia;
+
+void ConversionPosfija(TSimbolos *Ini){
+
+
+	precedencia["*"] = 2;
+	precedencia["/"] = 2;
+	precedencia["-"] = 1;
+	precedencia["+"] = 1;
+
+	AuxTabla = Ini;
+	while (AuxTabla!=NULL)
+	{	
+		//Si es un ID, es una asignación
+		if (!strcmp(AuxTabla->tipotoken,"ID"))
+		{
+			//Se agrega la variable y el operador de asignacion "=" a la notación
+			push_pos(AuxTabla->lexema);
+			AuxTabla = AuxTabla->liga;
+			push_pos(AuxTabla->lexema);
+			AuxTabla = AuxTabla->liga;
+			//AQUI COMIENZA LA CONVERSION
+			//Comienza a evaluar desde el primer operando mientras no sea ;
+			while (strcmp(AuxTabla->lexema,";")!= 0)
+			{
+				//Si es un número lo agrega a la notación
+				if (!strcmp(AuxTabla->tipotoken,"NE"))
+				{
+					push_pos(AuxTabla->lexema);
+				//Si es un operador
+				}else if (!strcmp(AuxTabla->tipotoken,"OA"))
+				{
+
+					if (POperadores == NULL)
+					{
+						push_op(AuxTabla->lexema);
+					}else
+					{
+						AuxOperadores = POperadores;
+						while (AuxOperadores!=NULL)
+						{
+							if ( (strcmp(QOperadores->lexema,"(") != 0) && (precedencia[QOperadores->lexema] >= precedencia[AuxTabla->lexema]))
+							{
+								push_pos(QOperadores->lexema);
+								pop_op();
+							}else break;
+							AuxOperadores = AuxOperadores->liga;
+						}
+					
+						push_op(AuxTabla->lexema);
+					}
+
+				}else if (!strcmp(AuxTabla->tipotoken,"PAR"))
+				{
+					if (!strcmp(AuxTabla->lexema,"("))
+					{
+						push_op(AuxTabla->lexema);
+					}else if(!strcmp(AuxTabla->lexema,")"))
+					{
+						while (strcmp(QOperadores->lexema,"(")!= 0)
+						{
+							push_pos(QOperadores->lexema);
+							pop_op();
+						}
+						pop_op();
+					}
+				}
+				AuxTabla = AuxTabla->liga;
+			}
+			AuxOperadores = POperadores;
+			while (AuxOperadores != NULL)
+			{
+				push_pos(QOperadores->lexema);
+				pop_op();
+				AuxOperadores = AuxOperadores->liga;
+			}
+			
+
+
+			
+		//Si no, recorre la tabla hasta encontrar un ";"
+		}else{
+
+			while (strcmp(AuxTabla->lexema,";")!= 0)
+			{
+				AuxTabla = AuxTabla->liga;
+			}
+		}
+		
+		AuxTabla = AuxTabla->liga;
+
+	}
+
+	AuxPosfija = PPosfija;
+	while (AuxPosfija!=NULL)
+	{
+		
+		printf("%s ",AuxPosfija->lexema);
+		AuxPosfija = AuxPosfija->liga;
+	}
+	
+
+	
+}
+
+
+
 void EscribeEnsamblador(const char* arc)
 {
 	FILE *Archivo = fopen(arc, "w");
