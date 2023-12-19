@@ -32,32 +32,37 @@ void ConversionPosfija(TSimbolos *Ini){
 			while (strcmp(AuxTabla->lexema,";")!= 0)
 			{
 				//Si es un número lo agrega a la notación
-				if (!strcmp(AuxTabla->tipotoken,"NE"))
+				if (!strcmp(AuxTabla->tipotoken,"NE") || !strcmp(AuxTabla->tipotoken,"ND"))
+				{
+					push_pos(AuxTabla->lexema);
+				//Si es una variable lo agrega a la notación
+				}else if (!strcmp(AuxTabla->tipotoken,"ID"))
 				{
 					push_pos(AuxTabla->lexema);
 				//Si es un operador
 				}else if (!strcmp(AuxTabla->tipotoken,"OA"))
 				{
-
+					//Si no hay operadores en la pila de operadores, hace push
 					if (POperadores == NULL)
 					{
 						push_op(AuxTabla->lexema);
 					}else
 					{
-						AuxOperadores2 = POperadores;
-						while (AuxOperadores2!=NULL)
+						//Mientras haya operadores en la pila, si el operador en el tope es de mayor precedencia,
+						//se saca de la pila y se introduce en la notación.
+						//Si no, rompe el ciclo
+						while (QOperadores!=NULL)
 						{
 							if ( (strcmp(QOperadores->lexema,"(") != 0) && (precedencia[QOperadores->lexema] > precedencia[AuxTabla->lexema]))
 							{
 								push_pos(QOperadores->lexema);
 								pop_op();
 							}else break;
-							AuxOperadores2 = AuxOperadores2->liga;
 						}
 					
 						push_op(AuxTabla->lexema);
 					}
-
+				//Si es un paréntesis
 				}else if (!strcmp(AuxTabla->tipotoken,"PAR"))
 				{
 					if (!strcmp(AuxTabla->lexema,"("))
