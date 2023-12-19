@@ -1,133 +1,224 @@
-
 #include <map>
 #include <string>
 
-
-
 using namespace std;
 
+FILE *Archivo;
+char asig[1000];
 map<string, int> precedencia;
 
 void ConversionPosfija(TSimbolos *Ini){
-
-
 	precedencia["*"] = 2;
 	precedencia["/"] = 2;
 	precedencia["-"] = 1;
 	precedencia["+"] = 1;
 
-	AuxTabla = Ini;
-	while (AuxTabla!=NULL)
-	{	
-		//Si es un ID, es una asignación
-		if (!strcmp(AuxTabla->tipotoken,"ID"))
+	//Si es un ID, es una asignación
+	if (!strcmp(AuxTabla->tipotoken,"ID"))
+	{
+		/*
+		//Se agrega la variable y el operador de asignacion "=" a la notación
+		push_pos(AuxTabla->lexema);
+		AuxTabla = AuxTabla->liga;
+		push_pos(AuxTabla->lexema);
+		AuxTabla = AuxTabla->liga;
+		*/
+		AuxTabla = AuxTabla->liga->liga;
+		//AQUI COMIENZA LA CONVERSION
+		//Comienza a evaluar desde el primer operando mientras no sea ;
+		while (strcmp(AuxTabla->lexema,";") != 0)
 		{
-			//Se agrega la variable y el operador de asignacion "=" a la notación
-			push_pos(AuxTabla->lexema);
-			AuxTabla = AuxTabla->liga;
-			push_pos(AuxTabla->lexema);
-			AuxTabla = AuxTabla->liga;
-			//AQUI COMIENZA LA CONVERSION
-			//Comienza a evaluar desde el primer operando mientras no sea ;
-			while (strcmp(AuxTabla->lexema,";")!= 0)
+			//Si es un número lo agrega a la notación
+			if (!strcmp(AuxTabla->tipotoken,"NE") || !strcmp(AuxTabla->tipotoken,"ND"))
 			{
-				//Si es un número lo agrega a la notación
-				if (!strcmp(AuxTabla->tipotoken,"NE") || !strcmp(AuxTabla->tipotoken,"ND"))
+				push_pos(AuxTabla);
+			//Si es una variable lo agrega a la notación
+			}else if (!strcmp(AuxTabla->tipotoken,"ID"))
+			{
+				push_pos(AuxTabla);
+			//Si es un operador
+			}else if (!strcmp(AuxTabla->tipotoken,"OA"))
+			{
+				//Si no hay operadores en la pila de operadores, hace push
+				if (POperadores == NULL)
 				{
-					push_pos(AuxTabla->lexema);
-				//Si es una variable lo agrega a la notación
-				}else if (!strcmp(AuxTabla->tipotoken,"ID"))
+					push_op(AuxTabla);
+				}else
 				{
-					push_pos(AuxTabla->lexema);
-				//Si es un operador
-				}else if (!strcmp(AuxTabla->tipotoken,"OA"))
-				{
-					//Si no hay operadores en la pila de operadores, hace push
-					if (POperadores == NULL)
+					//Mientras haya operadores en la pila, si el operador en el tope es de mayor precedencia,
+					//se saca de la pila y se introduce en la notación.
+					//Si no, rompe el ciclo
+					while (QOperadores!=NULL)
 					{
-						push_op(AuxTabla->lexema);
-					}else
-					{
-						//Mientras haya operadores en la pila, si el operador en el tope es de mayor precedencia,
-						//se saca de la pila y se introduce en la notación.
-						//Si no, rompe el ciclo
-						while (QOperadores!=NULL)
+						if ( (strcmp(QOperadores->lexema,"(") != 0) && (precedencia[QOperadores->lexema] > precedencia[AuxTabla->lexema]))
 						{
-							if ( (strcmp(QOperadores->lexema,"(") != 0) && (precedencia[QOperadores->lexema] > precedencia[AuxTabla->lexema]))
-							{
-								push_pos(QOperadores->lexema);
-								pop_op();
-							}else break;
-						}
-					
-						push_op(AuxTabla->lexema);
-					}
-				//Si es un paréntesis
-				}else if (!strcmp(AuxTabla->tipotoken,"PAR"))
-				{
-					if (!strcmp(AuxTabla->lexema,"("))
-					{
-						push_op(AuxTabla->lexema);
-					}else if(!strcmp(AuxTabla->lexema,")"))
-					{
-						while (strcmp(QOperadores->lexema,"(")!= 0)
-						{
-							push_pos(QOperadores->lexema);
+							push_pos(QOperadores);
 							pop_op();
-						}
+						}else break;
+					}
+				
+					push_op(AuxTabla);
+				}
+			//Si es un paréntesis
+			}else if (!strcmp(AuxTabla->tipotoken,"PAR"))
+			{
+				if (!strcmp(AuxTabla->lexema,"("))
+				{
+					push_op(AuxTabla);
+				}else if(!strcmp(AuxTabla->lexema,")"))
+				{
+					while (strcmp(QOperadores->lexema,"(")!= 0)
+					{
+						push_pos(QOperadores);
 						pop_op();
 					}
+					pop_op();
 				}
-				AuxTabla = AuxTabla->liga;
 			}
-			
-			while (QOperadores != NULL)
-			{
-				push_pos(QOperadores->lexema);
-				pop_op();
-			}
-
-			push_pos(";");
-
-
-			
-		//Si no, recorre la tabla hasta encontrar un ";"
-		}else{
-
-			while (strcmp(AuxTabla->lexema,";")!= 0)
-			{
-				AuxTabla = AuxTabla->liga;
-			}
+			AuxTabla = AuxTabla->liga;
 		}
-		
-		AuxTabla = AuxTabla->liga;
-
-	}
-
-	AuxPosfija = PPosfija;
-	while (AuxPosfija!=NULL)
-	{
-		if (!strcmp(AuxPosfija->lexema,";"))
+			
+		while (QOperadores != NULL)
 		{
-			printf("%s\n",AuxPosfija->lexema);
-		}else
+			push_pos(QOperadores);
+			pop_op();
+		}
+
+		//Imprime la notacion posfija por consola
+		AuxPosfija = PPosfija;
+		while (AuxPosfija!=NULL)
 		{
 			printf("%s ",AuxPosfija->lexema);
+			AuxPosfija = AuxPosfija->liga;
 		}
-		
-		AuxPosfija = AuxPosfija->liga;
-		
-	}
-	
-
-	
+		printf(";\n");
+	}			
 }
 
+void PosfijaAEnsamblador(void)
+{
+	char ultimoToken[1000];
+	char Op1[1000];
+	char Op2[1000];
+	char OpArit[1000];
+	bool especial = true;
+	AuxPosfija = PPosfija;
+	int numtemp = -1;
+	if( AuxPosfija != NULL && AuxPosfija->liga != NULL )
+	{
+		while( AuxPosfija != NULL )
+		{
+			//if( AuxPosfija->liga != NULL && AuxPosfija->liga->liga != NULL )
+			//printf("AuxPosfija vale: %s %s %s\n", AuxPosfija->tipotoken, AuxPosfija->liga->tipotoken, AuxPosfija->liga->liga->tipotoken);
+			bool operacion = false;
+			//Si la estructura es Operando-Operando-Operador
+			if( strcmp(AuxPosfija->tipotoken, "OA") && AuxPosfija->liga != NULL && AuxPosfija->liga->liga != NULL && strcmp(AuxPosfija->liga->tipotoken, "OA") && !strcmp(AuxPosfija->liga->liga->tipotoken, "OA") )
+			{
+				//Se guarda el ultimo token en la pila de jerarquias
+				if( AuxPosfija != PPosfija && !especial )
+					push_jerarquia(ultimoToken);
+				else
+					especial = false;
+				//Se anota una operacion que va a utilizar un nuevo temporal
+				strcpy( Op1, AuxPosfija->lexema );
+				strcpy( Op2, AuxPosfija->liga->lexema);
+				strcpy( OpArit, AuxPosfija->liga->liga->lexema);
+				//Se indica el temporal que se va a utilizar
+				numtemp++;
+				char ult[1000];
+				sprintf(ult, "T%d\0", numtemp);
+				strcpy(ultimoToken, ult);
+				operacion = true;
+				AuxPosfija = AuxPosfija->liga->liga->liga;
+		  	//Sino, si la estructura es Operando-Operador
+			} else if( strcmp(AuxPosfija->tipotoken, "OA") && AuxPosfija->liga != NULL && !strcmp(AuxPosfija->liga->tipotoken, "OA") )
+			{
+				char Temp[1000];
+		  		sprintf(Temp, "T%d\0", numtemp);
+		  		//Se anota una operacion que va a utilizar un nuevo temporal
+		  		strcpy( Op1, Temp);
+		  		strcpy( Op2, AuxPosfija->lexema);
+		  		strcpy( OpArit, AuxPosfija->liga->lexema);
+		 		numtemp++;
+				char ult[1000];
+				sprintf(ult, "T%d\0", numtemp);
+				strcpy(ultimoToken, ult);
+		  		operacion = true;
+				AuxPosfija = AuxPosfija->liga->liga;
+		 		//Sino, si la estructura es Operador
+			} else if( !strcmp(AuxPosfija->tipotoken, "OA") )
+			{
+				char Temp[1000];
+				sprintf(Temp, "T%d\0", numtemp);
+				//Se anota una operacion que va a utilizar un nuevo temporal
+		  		strcpy( Op1, QPilaJerarquia->lexema);
+				pop_jerarquia();
+		  		strcpy( Op2, Temp);
+		  		strcpy( OpArit, AuxPosfija->lexema);
+		 		numtemp++;
+				char ult[1000];
+				sprintf(ult, "T%d\0", numtemp);
+				strcpy(ultimoToken, ult);
+		  		operacion = true;
+				AuxPosfija = AuxPosfija->liga;
+		  	//Sino, ocurre un caso especial
+			} else {
+				push_jerarquia(AuxPosfija->lexema);
+				char ult[1000];
+				sprintf(ult, "T%d\0", numtemp);
+				strcpy(ultimoToken, ult);
+				especial = true;
+				operacion = false;
+				AuxPosfija = AuxPosfija->liga;
+			}
 
+			//Si se va a realizar una operacion
+			if( operacion )
+			{
+				if( !strcmp(OpArit, "+") )
+				{
+					fprintf(Archivo, "\tmov ax, %s\n", Op1);
+					fprintf(Archivo, "\tmov bx, %s\n", Op2);
+					fprintf(Archivo, "\tadd ax, bx\n");
+					fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
+				} else if( !strcmp(OpArit, "-") )
+				{
+					fprintf(Archivo, "\tmov ax, %s\n", Op1);
+					fprintf(Archivo, "\tmov bx, %s\n", Op2);
+					fprintf(Archivo, "\tsub ax, bx\n");
+					fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
+				} else if( !strcmp(OpArit, "*") )
+				{
+					fprintf(Archivo, "\tmov ax, %s\n", Op1);
+					fprintf(Archivo, "\tmov bx, %s\n", Op2);
+					fprintf(Archivo, "\tmul ax, bx\n");
+					fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
+				} else if( !strcmp(OpArit, "/") )
+				{
+					fprintf(Archivo, "\tmov ax, %s\n", Op1);
+					fprintf(Archivo, "\tmov bx, %s\n", Op2);
+					fprintf(Archivo, "\tdiv ax, bx\n");
+					fprintf(Archivo, "\t mov dx, 0\n");
+					fprintf(Archivo, "\tmov T%d, ax\n", numtemp);
+				}
+			}
+		}
+		fprintf(Archivo, "\tmov ax, T%d\n", numtemp);
+		fprintf(Archivo, "\tmov T%d, ax\n", ++numtemp);
+		fprintf(Archivo, "\tmov ax, T%d\n", numtemp);
+		fprintf(Archivo, "\tmov %s, ax\n\n", asig);
+		numtemp++;
+	} else {
+		fprintf(Archivo, "\tmov ax, %s\n", AuxPosfija->lexema);
+		fprintf(Archivo, "\tmov T0, ax\n");
+		fprintf(Archivo, "\tmov ax, T0\n");
+		fprintf(Archivo, "\tmov %s, ax\n\n", asig);
+	}
+}
 
 void EscribeEnsamblador(const char* arc)
 {
-	FILE *Archivo = fopen(arc, "w");
+	Archivo = fopen(arc, "w");
 	int tottemp = 0;	//El total de temporales que se tienen que generar
 	if( Archivo != NULL ) //Si el archivo se abre correctamente
 	{
@@ -174,19 +265,9 @@ void EscribeEnsamblador(const char* arc)
 				AuxTabla = AuxTabla->liga;
 				while( strcmp( AuxTabla->derivacion, "SEP" ) )	//Mientras queden tokens por analizar
 				{
-					//Si los tokens siguientes, incluyendo el actual, tienen juntos la estructura:
-					//( ID OA ID | ID OA NUM | NUM OA ID | NUM OA NUM )
-					//Cuenta otro temporal
-					if( AuxTabla != NULL )
-						if( AuxTabla->liga != NULL )
-							if( AuxTabla->liga->liga != NULL )
-								if( ( !strcmp( AuxTabla->derivacion, "ID" ) || !strcmp( AuxTabla->derivacion, "NUM" ) ) && ( !strcmp( AuxTabla->liga->derivacion, "OA" ) ) && ( !strcmp( AuxTabla->liga->liga->derivacion, "ID" ) || !strcmp( AuxTabla->liga->liga->derivacion, "NUM" ) ) )
-								{
-									numtemp++;
-									//Salta hasta el OA
-									AuxTabla = AuxTabla->liga;
-								}
-					//Salta al siguiente caracter. Si antes salto al OA, se desplaza dos tokens
+					if( !strcmp(AuxTabla->tipotoken, "OA") )
+						numtemp++;
+					//Salta al siguiente caracter
 					AuxTabla = AuxTabla->liga;
 				}
 				//Actualiza los temporales necesarios totales
@@ -208,95 +289,12 @@ void EscribeEnsamblador(const char* arc)
 		AuxTabla = PTabla;
 		while( AuxTabla != NULL )
 		{
-			if( !strcmp( AuxTabla->tipotoken, "ID" ) ) {	//Si se encuentra un identificador, es una asignacion
-				//Se recuerda la variable a la que se le va a asignar un valor
-				char asig[1000];
-				strcpy( asig, AuxTabla->lexema );
-				int numtemp = -1; //Esta variable cuenta los temporales que se van utilizando
-				//Salta a la asignacion
-				AuxTabla = AuxTabla->liga;
-				//Si el siguiente no es una asignacion, termina el programa
-				if( AuxTabla != NULL && strcmp( AuxTabla->tipotoken, "AS" ) )
-					return;
-				//Salta al primer ID o NUM
-				AuxTabla = AuxTabla->liga;
-				//Se recuerda el primer valor que aparece despues del signo =, por si solo existe ese en la instruccion
-				char prim[100];
-				if( AuxTabla != NULL )
-					strcpy( prim, AuxTabla->lexema );
-				while( strcmp( AuxTabla->derivacion, "SEP" ) )	//Mientras queden tokens por analizar
-				{
-					//Si los tokens siguientes, incluyendo el actual, tienen juntos la estructura:
-					//( ID OA ID | ID OA NUM | NUM OA ID | NUM OA NUM )
-					//Cuenta otro temporal
-					if( AuxTabla != NULL )
-						if( AuxTabla->liga != NULL )
-							if( AuxTabla->liga->liga != NULL )
-								if( ( !strcmp( AuxTabla->derivacion, "ID" ) || !strcmp( AuxTabla->derivacion, "NUM" ) ) && ( !strcmp( AuxTabla->liga->derivacion, "OA" ) ) && ( !strcmp( AuxTabla->liga->liga->derivacion, "ID" ) || !strcmp( AuxTabla->liga->liga->derivacion, "NUM" ) ) )
-								{
-									//Se va a utilizar el siguiente temporal
-									numtemp++;
-									//Si el operador es una suma
-									if( !strcmp( AuxTabla->liga->lexema, "+" ) )
-									{
-										//Genera el codigo ensamblador para la suma
-										//Si ya se utilizo al menos un temporal
-										if( numtemp > 0 )
-											fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
-										else
-											fprintf(Archivo, "\tmov ax, %s\n", AuxTabla->lexema);
-										fprintf(Archivo, "\tadd ax, %s\n", AuxTabla->liga->liga->lexema);
-										fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
-									} else if( !strcmp( AuxTabla->liga->lexema, "-" ) ) //Si el operador es una resta
-									{
-										//Genera el codigo ensamblador para la resta
-										if( numtemp > 0 )
-											fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
-										else
-											fprintf(Archivo, "\tmov ax, %s\n", AuxTabla->lexema);
-										fprintf(Archivo, "\tsub ax, %s\n", AuxTabla->liga->liga->lexema);
-										fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
-									} else if( !strcmp( AuxTabla->liga->lexema, "*" ) ) //Si el operador es una multiplicacion
-									{
-										//Genera el codigo ensamblador para la multiplicacion
-										if( numtemp > 0 )
-											fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
-										else
-											fprintf(Archivo, "\tmov ax, %s\n", AuxTabla->lexema);
-										fprintf(Archivo, "\tmov bx, %s\n", AuxTabla->liga->liga->lexema);
-										fprintf(Archivo, "\tmul bx\n");
-										fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
-									} else if( !strcmp( AuxTabla->liga->lexema, "/" ) ) //Si el operador es una division
-									{
-										//Genera el codigo ensamblador para la division
-										if( numtemp > 0 )
-											fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
-										else
-											fprintf(Archivo, "\tmov ax, %s\n", AuxTabla->lexema);
-										fprintf(Archivo, "\tmov bx, %s\n", AuxTabla->liga->liga->lexema);
-										fprintf(Archivo, "\tdiv bx\n");
-										fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
-									}
-									//Salta hasta el OA
-									AuxTabla = AuxTabla->liga;
-								}
-					//Salta al siguiente caracter. Si antes salto al OA, se desplaza dos tokens
-					AuxTabla = AuxTabla->liga;
-				}
-				//Genera el codigo ensamblador para la asignacion
-				numtemp++;
-				if( numtemp > 0 ) //Si se uso al menos un temporal, se asigna el ultimo temporal a la variable
-				{
-					fprintf(Archivo, "\tmov ax, T%d\n", numtemp-1);
-					fprintf(Archivo, "\tmov T%d, ax\n", numtemp);
-					fprintf(Archivo, "\tmov ax, T%d\n", numtemp);
-					fprintf(Archivo, "\tmov %s, ax\n\n", asig);
-				} else {	//Sino, se asigna el primer valor despues del token = 
-					fprintf(Archivo, "\tmov ax, %s\n", prim);
-					fprintf(Archivo, "\tmov T%d, ax\n", numtemp);
-					fprintf(Archivo, "\tmov ax, T%d\n", numtemp);
-					fprintf(Archivo, "\tmov %s, ax\n\n", asig);
-				}
+			if( !strcmp( AuxTabla->tipotoken, "ID") && AuxTabla->liga != NULL && !strcmp(AuxTabla->liga->tipotoken, "AS") ) {	//Si se encuentra un identificador, es una asignacion
+				strcpy(asig, AuxTabla->lexema);
+				ConversionPosfija(AuxTabla);
+				PosfijaAEnsamblador();
+				VaciaPosfija();
+				VaciaOperadores();
 			}
 			else
 			{

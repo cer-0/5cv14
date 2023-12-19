@@ -1,6 +1,7 @@
 TSimbolos *PPila, *QPila, *AuxPila, *NuevoPila;
 TSimbolos *PPosfija, *QPosfija, *AuxPosfija, *NuevoPosfija;
 TSimbolos *POperadores, *QOperadores, *AuxOperadores, *AuxOperadores2, *NuevoOperadores;
+TSimbolos *PPilaJerarquia, *QPilaJerarquia, *AuxPilaJerarquia, *NuevoPilaJerarquia;
 
 
 void push(const char* a)
@@ -67,11 +68,12 @@ void VaciaPila()
 }
 
 
-void push_pos(const char *a)
+void push_pos(TSimbolos *a)
 {
 	NuevoPosfija = (TSimbolos*)(malloc(sizeof(TSimbolos)));
 	NuevoPosfija->liga = NULL;
-	strcpy(NuevoPosfija->lexema, a);
+	strcpy(NuevoPosfija->lexema, a->lexema);
+	strcpy(NuevoPosfija->tipotoken, a->tipotoken);
 	if(PPosfija == NULL)
 	{
 		PPosfija = NuevoPosfija;
@@ -84,11 +86,12 @@ void push_pos(const char *a)
 	}
 }
 
-void push_op(const char *a)
+void push_op(TSimbolos *a)
 {
 	NuevoOperadores = (TSimbolos*)(malloc(sizeof(TSimbolos)));
 	NuevoOperadores->liga = NULL;
-	strcpy(NuevoOperadores->lexema, a);
+	strcpy(NuevoOperadores->lexema, a->lexema);
+	strcpy(NuevoOperadores->tipotoken, a->tipotoken);
 	if(POperadores == NULL)
 	{
 		POperadores = NuevoOperadores;
@@ -125,3 +128,66 @@ void pop_op()
 	}
 }
 
+void push_jerarquia(const char *a)
+{
+	NuevoPilaJerarquia = (TSimbolos*)(malloc(sizeof(TSimbolos)));
+	NuevoPilaJerarquia->liga = NULL;
+	strcpy(NuevoPilaJerarquia->lexema, a);
+	if(PPilaJerarquia == NULL)
+	{
+		PPilaJerarquia = NuevoPilaJerarquia;
+		QPilaJerarquia = PPilaJerarquia;
+	}
+	else
+	{
+		QPilaJerarquia->liga = NuevoPilaJerarquia;
+		QPilaJerarquia = QPilaJerarquia->liga;	
+	}
+}
+
+void pop_jerarquia()
+{
+	AuxPilaJerarquia = PPilaJerarquia;
+	if(AuxPilaJerarquia != NULL)
+	{
+		if( PPilaJerarquia->liga != NULL )
+		{	
+			while(AuxPilaJerarquia->liga->liga != NULL)
+				AuxPilaJerarquia = AuxPilaJerarquia->liga;
+			QPilaJerarquia = AuxPilaJerarquia;
+			AuxPilaJerarquia = QPilaJerarquia->liga;
+			QPilaJerarquia->liga = NULL;
+			free(AuxPilaJerarquia);
+		}
+		else
+		{
+			free(AuxPilaJerarquia);
+			PPilaJerarquia = NULL;
+			QPilaJerarquia = NULL;
+		}	
+	}
+}
+
+void VaciaPosfija(void)
+{
+	AuxPosfija = PPosfija;
+	while( AuxPosfija != NULL )
+	{
+		PPosfija = PPosfija->liga;
+		free(AuxPosfija);
+		AuxPosfija = PPosfija;
+	}
+	QPosfija = NULL;
+}
+
+void VaciaOperadores(void)
+{
+	AuxOperadores = POperadores;
+	while( AuxOperadores != NULL )
+	{
+		POperadores = POperadores->liga;
+		free(AuxOperadores);
+		AuxOperadores = POperadores;
+	}
+	QOperadores = NULL;
+}

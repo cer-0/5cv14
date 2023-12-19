@@ -11,6 +11,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <math.h>
 #include "Compilador.h"
 
 int main(void)	
@@ -27,8 +28,7 @@ int main(void)
 			ImprimeTabla();
 			if( !AnalizadorSemantico(PTabla, 0) )
 			{
-				ConversionPosfija(PTabla);
-				//EscribeEnsamblador(programa);
+				EscribeEnsamblador(programa);
 			}
 		}
 	}
