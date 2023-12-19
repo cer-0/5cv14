@@ -81,7 +81,8 @@ void ConversionPosfija(TSimbolos *Ini){
 				push_pos(QOperadores->lexema);
 				pop_op();
 			}
-			
+
+			push_pos(";");
 
 
 			
@@ -101,9 +102,16 @@ void ConversionPosfija(TSimbolos *Ini){
 	AuxPosfija = PPosfija;
 	while (AuxPosfija!=NULL)
 	{
+		if (!strcmp(AuxPosfija->lexema,";"))
+		{
+			printf("%s\n",AuxPosfija->lexema);
+		}else
+		{
+			printf("%s ",AuxPosfija->lexema);
+		}
 		
-		printf("%s ",AuxPosfija->lexema);
 		AuxPosfija = AuxPosfija->liga;
+		
 	}
 	
 
