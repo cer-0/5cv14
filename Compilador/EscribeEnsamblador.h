@@ -191,13 +191,13 @@ void PosfijaAEnsamblador(void)
 				{
 					fprintf(Archivo, "\tmov ax, %s\n", Op1);
 					fprintf(Archivo, "\tmov bx, %s\n", Op2);
-					fprintf(Archivo, "\tmul ax, bx\n");
+					fprintf(Archivo, "\tmul bx\n");
 					fprintf(Archivo, "\tmov T%d, ax\n\n", numtemp);
 				} else if( !strcmp(OpArit, "/") )
 				{
 					fprintf(Archivo, "\tmov ax, %s\n", Op1);
 					fprintf(Archivo, "\tmov bx, %s\n", Op2);
-					fprintf(Archivo, "\tdiv ax, bx\n");
+					fprintf(Archivo, "\tdiv bx\n");
 					fprintf(Archivo, "\t mov dx, 0\n");
 					fprintf(Archivo, "\tmov T%d, ax\n", numtemp);
 				}
