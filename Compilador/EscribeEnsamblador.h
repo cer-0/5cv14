@@ -44,15 +44,15 @@ void ConversionPosfija(TSimbolos *Ini){
 						push_op(AuxTabla->lexema);
 					}else
 					{
-						AuxOperadores = POperadores;
-						while (AuxOperadores!=NULL)
+						AuxOperadores2 = POperadores;
+						while (AuxOperadores2!=NULL)
 						{
-							if ( (strcmp(QOperadores->lexema,"(") != 0) && (precedencia[QOperadores->lexema] >= precedencia[AuxTabla->lexema]))
+							if ( (strcmp(QOperadores->lexema,"(") != 0) && (precedencia[QOperadores->lexema] > precedencia[AuxTabla->lexema]))
 							{
 								push_pos(QOperadores->lexema);
 								pop_op();
 							}else break;
-							AuxOperadores = AuxOperadores->liga;
+							AuxOperadores2 = AuxOperadores2->liga;
 						}
 					
 						push_op(AuxTabla->lexema);
@@ -75,12 +75,11 @@ void ConversionPosfija(TSimbolos *Ini){
 				}
 				AuxTabla = AuxTabla->liga;
 			}
-			AuxOperadores = POperadores;
-			while (AuxOperadores != NULL)
+			
+			while (QOperadores != NULL)
 			{
 				push_pos(QOperadores->lexema);
 				pop_op();
-				AuxOperadores = AuxOperadores->liga;
 			}
 			
 

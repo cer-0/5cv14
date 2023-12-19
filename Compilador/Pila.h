@@ -1,6 +1,6 @@
 TSimbolos *PPila, *QPila, *AuxPila, *NuevoPila;
 TSimbolos *PPosfija, *QPosfija, *AuxPosfija, *NuevoPosfija;
-TSimbolos *POperadores, *QOperadores, *AuxOperadores, *NuevoOperadores;
+TSimbolos *POperadores, *QOperadores, *AuxOperadores, *AuxOperadores2, *NuevoOperadores;
 
 
 void push(const char* a)
