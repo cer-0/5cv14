@@ -11,11 +11,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <math.h>
 #include "Compilador.h"
 
 int main(void)	
 {
-	
+
 	const char* archivo = "archivofuente.txt";
 	const char* programa = "programafinal.txt";
 
@@ -26,10 +27,12 @@ int main(void)
 		{
 			ImprimeTabla();
 			if( !AnalizadorSemantico(PTabla, 0) )
+			{
 				EscribeEnsamblador(programa);
+			}
 		}
 	}
-	printf("Presione una tecla para continuar...");
+	printf("\nPresione una tecla para continuar...");
 	getchar();
 	return 0;
 }
