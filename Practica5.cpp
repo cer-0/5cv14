@@ -21,13 +21,20 @@ int main(void)
 	const char* programa = "programafinal.txt";
 
 	//En lugar de ingresar una cadena, se leen del archivo
+	printf("\n\t\t**INICIANDO ANALISIS LEXICO**\n");
 	if( !LeeArchivo(archivo) )
 	{
+		printf("\n\n\t\t**LEXICAMENTE CORRECTO**\n\n");
+		printf("\n\t\t**INICIANDO ANALISIS SINTACTICO**\n");
 		if( !AnalizadorSintactico(PTabla, 0) )
 		{
-			ImprimeTabla();
+			//ImprimeTabla();
+			printf("\n\n\t\t**SINTACTICAMENTE CORRECTO**\n\n");
+			printf("\n\t\t**INICIANDO ANALISIS SEMANTICO**\n");
 			if( !AnalizadorSemantico(PTabla, 0) )
 			{
+				printf("\n\n\t\t**SEMANTICAMENTE CORRECTO**\n\n");
+				printf("\n\t\t**CONVIRTIENDO A NOTACION RPN Y ESCRIBIENDO CODIGO OBJETO**\n");
 				EscribeEnsamblador(programa);
 			}
 		}

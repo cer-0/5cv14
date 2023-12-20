@@ -85,6 +85,7 @@ void ConversionPosfija(TSimbolos *Ini){
 		}
 
 		//Imprime la notacion posfija por consola
+		
 		AuxPosfija = PPosfija;
 		while (AuxPosfija!=NULL)
 		{
@@ -305,7 +306,8 @@ void EscribeEnsamblador(const char* arc)
 			AuxTabla = AuxTabla->liga;
 		}
 		fprintf( Archivo, "\tEND begin\n");
-		fclose(Archivo);		
+		fclose(Archivo);
+		printf("\n\n\t\t**C O M P I L A C I Ó N         E X I T O S A**\n\n");		
 	}
 	else
 		printf("Ocurrio un error al intentar abrir el archivo\n\n");

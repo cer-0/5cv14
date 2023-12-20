@@ -28,7 +28,7 @@ begin:
 
 	mov ax, b
 	mov bx, T0
-	mul ax, bx
+	mul bx
 	mov T1, ax
 
 	mov ax, 3
